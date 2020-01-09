@@ -1,0 +1,31 @@
+general:
+    random_state: 42
+    device: "cuda:0"
+
+data:
+    csv: ../inputs/train_v2.csv
+    X_train: "../inputs/X_train.npy"
+    y_train: "../inputs/y_train.npy"
+    input_h: 128
+    input_w: 128
+
+model:
+    input_dim: 1
+    n_outputs: 186
+    name: resnet18
+    pretrained: !!python/bool False
+    # init_weight: !!python/bool True
+
+training:
+    loss: "CrossEntropyLoss"
+    n_splits: 5
+    batch_size: 256
+    epochs: 2  # 30
+    n_worker: 4
+    single_fold: !!python/bool False
+    single_iter: !!python/bool False
+
+optimizer:
+    name: Adam
+    lr: !!python/float 1e-3
+    weight_decay: !!python/float 0.
