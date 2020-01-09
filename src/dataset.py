@@ -5,10 +5,10 @@ from torchvision import transforms
 
 
 class MyDataset(Dataset):
-    def __init__(self, data, label, train=False):
-        self.data = data
+    def __init__(self, data, label, mode='train'):
+        self.data = np.expand_dims(data, axis=3)
         self.label = label
-        self.train = train
+        self.is_training = (mode == 'train' or 'valid')
         # self.input_h = 224
         # self.input_w = 224
         self.transform = transforms.Compose([
@@ -17,7 +17,7 @@ class MyDataset(Dataset):
         ])
 
     def __len__(self):
-        return len(self.df_label)
+        return len(self.label)
 
     def __getitem__(self, idx):
         # input
@@ -25,11 +25,11 @@ class MyDataset(Dataset):
         if self.transform is not None:
             input_ = self.transform(input_)
 
-        if self.test:
+        if not self.is_training:
             return input_
 
         # target
         target = self.label[idx]
-        target = torch.from_numpy(np.asarray(target).astype(np.float32))
+        target = torch.from_numpy(np.asarray(target)).type(torch.LongTensor)
 
         return input_, target

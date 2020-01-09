@@ -119,7 +119,7 @@ class Bottleneck(nn.Module):
 
 class ResNet(nn.Module):
 
-    def __init__(self, block, layers, num_classes=1000, zero_init_residual=False,
+    def __init__(self, block, layers, input_dim=3, num_classes=1000, zero_init_residual=False,
                  groups=1, width_per_group=64, replace_stride_with_dilation=None,
                  norm_layer=None):
         super(ResNet, self).__init__()
@@ -138,7 +138,7 @@ class ResNet(nn.Module):
                              "or a 3-element tuple, got {}".format(replace_stride_with_dilation))
         self.groups = groups
         self.base_width = width_per_group
-        self.conv1 = nn.Conv2d(3, self.inplanes, kernel_size=7, stride=2, padding=3,
+        self.conv1 = nn.Conv2d(input_dim, self.inplanes, kernel_size=7, stride=2, padding=3,
                                bias=False)
         self.bn1 = norm_layer(self.inplanes)
         self.relu = nn.ReLU(inplace=True)
@@ -216,7 +216,8 @@ class ResNet(nn.Module):
         return self._forward_impl(x)
 
 
-def _resnet(arch, block, layers, pretrained, finetune, progress, **kwargs):
+def _resnet(arch, block, layers, pretrained, progress, **kwargs):
+    '''
     if finetune:
         n_outputs = kwargs['num_classes']
         kwargs['num_classes'] = 1000
@@ -224,9 +225,8 @@ def _resnet(arch, block, layers, pretrained, finetune, progress, **kwargs):
         state_dict = load_state_dict_from_url(model_urls[arch], progress=progress)
         model.load_state_dict(state_dict)
         model.fc = nn.Linear(512 * block.expansion, n_outputs)
-
         return model
-
+    '''
     model = ResNet(block, layers, **kwargs)
     if pretrained:
         state_dict = load_state_dict_from_url(model_urls[arch],
@@ -238,26 +238,26 @@ def _resnet(arch, block, layers, pretrained, finetune, progress, **kwargs):
 
 def resnet18(pretrained=False, progress=True, **kwargs):
     r"""ResNet-18 model from
-    `"Deep Residual Learning for Image Recognition" <https://arxiv.org/pdf/1512.03385.pdf>`_
+    `"Deep Residual Learning for Image Recognition"
+    <https://arxiv.org/pdf/1512.03385.pdf>`_
 
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
         progress (bool): If True, displays a progress bar of the download to stderr
     """
-    return _resnet('resnet18', BasicBlock, [2, 2, 2, 2], pretrained, progress,
-                   **kwargs)
+    return _resnet('resnet18', BasicBlock, [2, 2, 2, 2], pretrained, progress, **kwargs)
 
 
-def resnet34(pretrained=False, finetune=False, progress=True, **kwargs):
+def resnet34(pretrained=False, progress=True, **kwargs):
     r"""ResNet-34 model from
-    `"Deep Residual Learning for Image Recognition" <https://arxiv.org/pdf/1512.03385.pdf>`_
+    `"Deep Residual Learning for Image Recognition"
+    <https://arxiv.org/pdf/1512.03385.pdf>`_
 
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
         progress (bool): If True, displays a progress bar of the download to stderr
     """
-    return _resnet('resnet34', BasicBlock, [3, 4, 6, 3], pretrained, finetune,
-            progress, **kwargs)
+    return _resnet('resnet34', BasicBlock, [3, 4, 6, 3], pretrained, progress, **kwargs)
 
 
 def resnet50(pretrained=False, progress=True, **kwargs):
