@@ -10,17 +10,16 @@ data:
     input_w: 128
 
 model:
-    input_dim: 1
+    input_dim: 3
     n_outputs: 186
-    name: resnet18
+    name: "vgg19_bn"
     pretrained: !!python/bool False
-    # init_weight: !!python/bool True
 
 training:
     loss: "CrossEntropyLoss"
     n_splits: 5
     batch_size: 256
-    epochs: 2  # 30
+    epochs: 30
     n_worker: 4
     single_fold: !!python/bool False
     single_iter: !!python/bool False
