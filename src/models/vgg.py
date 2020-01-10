@@ -82,8 +82,8 @@ def make_layers(cfg, input_dim=3, batch_norm=False):
 cfgs = {
     'A': [64, 'M', 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
     'B': [64, 64, 'M', 128, 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
-    'D': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512, 'M', 512, 512, 512, 'M'],
-    'E': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 256, 'M', 512, 512, 512, 512, 'M', 512, 512, 512, 512, 'M'],
+    'D': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512, 'M', 512, 512, 512, 'M'],  # noqa
+    'E': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 256, 'M', 512, 512, 512, 512, 'M', 512, 512, 512, 512, 'M'],  # noqa
 }
 
 
@@ -115,7 +115,8 @@ def _vgg(arch, cfg, batch_norm, pretrained, progress, **kwargs):
 
 def vgg11(pretrained=False, progress=True, **kwargs):
     r"""VGG 11-layer model (configuration "A") from
-    `"Very Deep Convolutional Networks For Large-Scale Image Recognition" <https://arxiv.org/pdf/1409.1556.pdf>`_
+    `"Very Deep Convolutional Networks For Large-Scale Image Recognition"
+    <https://arxiv.org/pdf/1409.1556.pdf>`_
 
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
@@ -126,7 +127,8 @@ def vgg11(pretrained=False, progress=True, **kwargs):
 
 def vgg11_bn(pretrained=False, progress=True, **kwargs):
     r"""VGG 11-layer model (configuration "A") with batch normalization
-    `"Very Deep Convolutional Networks For Large-Scale Image Recognition" <https://arxiv.org/pdf/1409.1556.pdf>`_
+    `"Very Deep Convolutional Networks For Large-Scale Image Recognition"
+    <https://arxiv.org/pdf/1409.1556.pdf>`_
 
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
@@ -137,7 +139,8 @@ def vgg11_bn(pretrained=False, progress=True, **kwargs):
 
 def vgg13(pretrained=False, progress=True, **kwargs):
     r"""VGG 13-layer model (configuration "B")
-    `"Very Deep Convolutional Networks For Large-Scale Image Recognition" <https://arxiv.org/pdf/1409.1556.pdf>`_
+    `"Very Deep Convolutional Networks For Large-Scale Image Recognition"
+    <https://arxiv.org/pdf/1409.1556.pdf>`_
 
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
@@ -148,7 +151,8 @@ def vgg13(pretrained=False, progress=True, **kwargs):
 
 def vgg13_bn(pretrained=False, progress=True, **kwargs):
     r"""VGG 13-layer model (configuration "B") with batch normalization
-    `"Very Deep Convolutional Networks For Large-Scale Image Recognition" <https://arxiv.org/pdf/1409.1556.pdf>`_
+    `"Very Deep Convolutional Networks For Large-Scale Image Recognition"
+    <https://arxiv.org/pdf/1409.1556.pdf>`_
 
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
@@ -159,7 +163,8 @@ def vgg13_bn(pretrained=False, progress=True, **kwargs):
 
 def vgg16(pretrained=False, progress=True, **kwargs):
     r"""VGG 16-layer model (configuration "D")
-    `"Very Deep Convolutional Networks For Large-Scale Image Recognition" <https://arxiv.org/pdf/1409.1556.pdf>`_
+    `"Very Deep Convolutional Networks For Large-Scale Image Recognition"
+    <https://arxiv.org/pdf/1409.1556.pdf>`_
 
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
@@ -170,7 +175,8 @@ def vgg16(pretrained=False, progress=True, **kwargs):
 
 def vgg16_bn(pretrained=False, progress=True, **kwargs):
     r"""VGG 16-layer model (configuration "D") with batch normalization
-    `"Very Deep Convolutional Networks For Large-Scale Image Recognition" <https://arxiv.org/pdf/1409.1556.pdf>`_
+    `"Very Deep Convolutional Networks For Large-Scale Image Recognition"
+    <https://arxiv.org/pdf/1409.1556.pdf>`_
 
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
@@ -181,7 +187,8 @@ def vgg16_bn(pretrained=False, progress=True, **kwargs):
 
 def vgg19(pretrained=False, progress=True, **kwargs):
     r"""VGG 19-layer model (configuration "E")
-    `"Very Deep Convolutional Networks For Large-Scale Image Recognition" <https://arxiv.org/pdf/1409.1556.pdf>`_
+    `"Very Deep Convolutional Networks For Large-Scale Image Recognition"
+    <https://arxiv.org/pdf/1409.1556.pdf>`_
 
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
@@ -192,7 +199,8 @@ def vgg19(pretrained=False, progress=True, **kwargs):
 
 def vgg19_bn(pretrained=False, progress=True, **kwargs):
     r"""VGG 19-layer model (configuration 'E') with batch normalization
-    `"Very Deep Convolutional Networks For Large-Scale Image Recognition" <https://arxiv.org/pdf/1409.1556.pdf>`_
+    `"Very Deep Convolutional Networks For Large-Scale Image Recognition"
+    <https://arxiv.org/pdf/1409.1556.pdf>`_
 
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
