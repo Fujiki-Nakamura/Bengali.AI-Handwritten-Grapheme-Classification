@@ -63,9 +63,9 @@ class VGG(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
 
-def make_layers(cfg, batch_norm=False):
+def make_layers(cfg, input_dim=3, batch_norm=False):
     layers = []
-    in_channels = 3
+    in_channels = input_dim
     for v in cfg:
         if v == 'M':
             layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
@@ -90,11 +90,26 @@ cfgs = {
 def _vgg(arch, cfg, batch_norm, pretrained, progress, **kwargs):
     if pretrained:
         kwargs['init_weights'] = False
-    model = VGG(make_layers(cfgs[cfg], batch_norm=batch_norm), **kwargs)
+    model = VGG(
+        make_layers(cfgs[cfg], kwargs.pop('input_dim'), batch_norm=batch_norm),
+        **kwargs
+    )
     if pretrained:
-        state_dict = load_state_dict_from_url(model_urls[arch],
-                                              progress=progress)
+        n_outputs = kwargs['num_classes']
+        kwargs['num_classes'] = 1000
+        state_dict = load_state_dict_from_url(model_urls[arch], progress=progress)
         model.load_state_dict(state_dict)
+        model.classifier = nn.Sequential(
+            nn.Linear(512 * 7 * 7, 4096),
+            nn.ReLU(True),
+            nn.Dropout(),
+            nn.Linear(4096, 4096),
+            nn.ReLU(True),
+            nn.Dropout(),
+            nn.Linear(4096, n_outputs),
+        )
+        return model
+
     return model
 
 
