@@ -8,7 +8,7 @@ class MyDataset(Dataset):
     def __init__(self, data, label, config, mode='train'):
         self.data = np.expand_dims(data, axis=3)
         self.label = label
-        self.is_training = (mode == 'train' or 'valid')
+        self.is_training = (mode in ['train', 'valid'])
         self.input_c = config.model.input_dim
         # self.input_h = 224
         # self.input_w = 224
