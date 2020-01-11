@@ -9,6 +9,7 @@ class MyDataset(Dataset):
         self.data = np.expand_dims(data, axis=3)
         self.label = label
         self.is_training = (mode == 'train' or 'valid')
+        self.input_c = config.model.input_dim
         # self.input_h = 224
         # self.input_w = 224
         self.transform = transforms.Compose([
@@ -22,6 +23,8 @@ class MyDataset(Dataset):
     def __getitem__(self, idx):
         # input
         input_ = self.data[idx]
+        if self.input_c == 3:
+            input_ = np.concatenate([input_, ]*3, axis=2)
         if self.transform is not None:
             input_ = self.transform(input_)
 
