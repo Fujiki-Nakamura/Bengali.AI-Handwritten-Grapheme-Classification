@@ -5,7 +5,7 @@ from torchvision import transforms
 
 
 class MyDataset(Dataset):
-    def __init__(self, data, label, mode='train'):
+    def __init__(self, data, label, config, mode='train'):
         self.data = np.expand_dims(data, axis=3)
         self.label = label
         self.is_training = (mode == 'train' or 'valid')

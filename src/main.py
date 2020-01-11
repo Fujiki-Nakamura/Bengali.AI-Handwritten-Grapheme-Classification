@@ -68,8 +68,8 @@ def main(args):
         y_train_ = y_train[train_idx]
         X_valid_ = X_train[valid_idx]
         y_valid_ = y_train[valid_idx]
-        train_set = Dataset(X_train_, y_train_, mode='train')
-        valid_set = Dataset(X_valid_, y_valid_, mode='valid')
+        train_set = Dataset(X_train_, y_train_, cfg, mode='train')
+        valid_set = Dataset(X_valid_, y_valid_, cfg, mode='valid')
         train_loader = DataLoader(
             train_set, batch_size=cfg.training.batch_size, shuffle=True,
             num_workers=cfg.training.n_worker)
