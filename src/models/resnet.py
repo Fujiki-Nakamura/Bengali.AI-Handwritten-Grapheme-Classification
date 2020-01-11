@@ -226,11 +226,11 @@ def _resnet(arch, block, layers, pretrained, progress, **kwargs):
         model.load_state_dict(state_dict)
         model.fc = nn.Linear(512 * block.expansion, n_outputs)
         return model
-    '''
+
     model = ResNet(block, layers, **kwargs)
     if pretrained:
-        state_dict = load_state_dict_from_url(model_urls[arch],
-                                              progress=progress)
+        state_dict = load_state_dict_from_url(
+            model_urls[arch], progress=progress)
         model.load_state_dict(state_dict)
 
     return model
