@@ -217,8 +217,7 @@ class ResNet(nn.Module):
 
 
 def _resnet(arch, block, layers, pretrained, progress, **kwargs):
-    '''
-    if finetune:
+    if pretrained:
         n_outputs = kwargs['num_classes']
         kwargs['num_classes'] = 1000
         model = ResNet(block, layers, **kwargs)
