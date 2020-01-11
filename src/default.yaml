@@ -3,17 +3,16 @@ general:
     device: "cuda:0"
 
 data:
-    csv: ../inputs/train_v2.csv
     X_train: "../inputs/X_train.npy"
     y_train: "../inputs/y_train.npy"
-    input_h: 128
-    input_w: 128
+    # input_h: 128
+    # input_w: 128
 
 model:
     input_dim: 3
     n_outputs: 186
-    name: "vgg19_bn"
-    pretrained: !!python/bool False
+    name: resnet18
+    pretrained: !!python/bool True
 
 training:
     loss: "CrossEntropyLoss"
@@ -26,5 +25,5 @@ training:
 
 optimizer:
     name: Adam
-    lr: !!python/float 1e-3
-    weight_decay: !!python/float 0.
+    lr: !!python/float 1e-2
+    weight_decay: !!python/float 0.  # 5e-4
