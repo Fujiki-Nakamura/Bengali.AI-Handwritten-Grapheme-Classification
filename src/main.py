@@ -9,7 +9,7 @@ import addict
 import yaml
 import numpy as np
 from sklearn.metrics import recall_score
-from sklearn.model_selection import KFold
+from sklearn import model_selection
 import torch
 from torch.nn import functional as F
 import torch.optim as optim
@@ -61,9 +61,12 @@ def main(args):
     y_train = np.load(cfg.data.y_train, allow_pickle=True)
     logger.info('Loaded X_train, y_train')
     # CV
-    kf = KFold(n_splits=cfg.training.n_splits, shuffle=True, random_state=cfg.general.random_state)  # noqa
+    kf = model_selection.__dict__[cfg.training.split](
+        n_splits=cfg.training.n_splits, shuffle=True, random_state=cfg.general.random_state)  # noqa
     score_list = {'loss': [], 'score': []}
-    for fold_i, (train_idx, valid_idx) in enumerate(kf.split(y_train)):
+    for fold_i, (train_idx, valid_idx) in enumerate(
+        kf.split(X=np.zeros(len(y_train)), y=y_train[:, 0])
+    ):
         X_train_ = X_train[train_idx]
         y_train_ = y_train[train_idx]
         X_valid_ = X_train[valid_idx]

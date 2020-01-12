@@ -8,7 +8,7 @@ import addict
 import yaml
 import numpy as np
 from sklearn import metrics
-from sklearn.model_selection import KFold
+from sklearn import model_selection
 import torch
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
@@ -54,14 +54,14 @@ def main(args):
     logger.info('Loaded X_train, y_train')
 
     # CV
-    kf = KFold(n_splits=cfg.training.n_splits, shuffle=True, random_state=cfg.general.random_state)  # noqa
-    # proba x3
+    kf = model_selection.__dict__[cfg.training.split](
+        n_splits=cfg.training.n_splits, shuffle=True, random_state=cfg.general.random_state)  # noqa
     probas = {
         'grapheme': np.zeros((len(X_train), N_GRAPHEME)),
         'vowel': np.zeros((len(X_train), N_VOWEL)),
         'consonant': np.zeros((len(X_train), N_CONSONANT)),
     }
-    for fold_i, (train_idx, valid_idx) in enumerate(kf.split(y_train)):
+    for fold_i, (train_idx, valid_idx) in enumerate(kf.split(y_train[:, 0])):
         X_valid_ = X_train[valid_idx]
         y_valid_ = y_train[valid_idx]
         valid_set = Dataset(X_valid_, y_valid_, cfg, mode='valid')
