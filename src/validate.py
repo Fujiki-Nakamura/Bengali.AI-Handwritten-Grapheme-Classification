@@ -7,6 +7,8 @@ import shutil
 import addict
 import yaml
 import numpy as np
+from tqdm import tqdm
+
 from sklearn import metrics
 from sklearn import model_selection
 import torch
@@ -19,21 +21,25 @@ import models
 import utils
 
 
+best_model_name = 'bestLoss.pt'
+device = 'cpu'
+
+
 def main(args):
-    with open(args.config, 'r') as f:
+    # config
+    config = LOGDIR/f'{args.expid}/config.yaml'
+    with open(config, 'r') as f:
         y = yaml.load(f, Loader=yaml.Loader)
     cfg = addict.Dict(y)
-    cfg.general.config = args.config
 
     # misc
-    device = cfg.general.device
     random.seed(cfg.general.random_state)
     os.environ['PYTHONHASHSEED'] = str(cfg.general.random_state)
     np.random.seed(cfg.general.random_state)
     torch.manual_seed(cfg.general.random_state)
 
     # log
-    expid = cfg.valid.expid
+    expid = args.expid
     cfg.general.logdir = str(LOGDIR/expid)
     if not os.path.exists(cfg.general.logdir):
         os.makedirs(cfg.general.logdir)
@@ -42,11 +48,7 @@ def main(args):
     logger.info(f'Logging at {cfg.general.logdir}')
     logger.info(cfg)
     cfg.general.logdir = Path(cfg.general.logdir)
-    shutil.copyfile(str(args.config), cfg.general.logdir/'config_val.yaml')
-
-    # model
-    model = models.get_model(cfg=cfg)
-    model = model.to(device)
+    shutil.copyfile(str(config), cfg.general.logdir/'config_val.yaml')
 
     # data
     X_train = np.load(cfg.data.X_train, allow_pickle=True)
@@ -69,24 +71,27 @@ def main(args):
             valid_set, batch_size=cfg.training.batch_size, shuffle=False,
             num_workers=cfg.training.n_worker)
 
-        # pretrained model
+        # model
         fold_d = cfg.general.logdir/f'fold_{fold_i}'
-        checkpoint = fold_d/cfg.valid.best_model_name
+        checkpoint = fold_d/best_model_name
         checkpoint = torch.load(checkpoint, map_location=device)
+        model = models.get_model(cfg=cfg)
+        model.load_state_dict(checkpoint['state_dict'])
+        model = model.to(device)
+        model.eval()
 
         proba = {'grapheme': [], 'vowel': [], 'consonant': []}
         with torch.no_grad():
+            pbar = tqdm(total=len(valid_loader), desc=f'Fold {fold_i+1}')
             for input_, target in valid_loader:
-                input_ = input_.to(cfg.general.device)
+                input_ = input_.to(device)
                 output = model(input_)
-                outputs = torch.split(
-                    output, [N_GRAPHEME, N_VOWEL, N_CONSONANT], dim=1)
-                proba['grapheme'].extend(
-                    F.softmax(outputs[0], dim=1).detach().cpu().numpy().tolist())
-                proba['vowel'].extend(
-                    F.softmax(outputs[1], dim=1).detach().cpu().numpy().tolist())
-                proba['consonant'].extend(
-                    F.softmax(outputs[2], dim=1).detach().cpu().numpy().tolist())
+                outputs = torch.split(output, [N_GRAPHEME, N_VOWEL, N_CONSONANT], dim=1)
+                for component_i, component in enumerate(component_list):
+                    proba[component].extend(
+                        F.softmax(outputs[component_i], dim=1).detach().cpu().numpy().tolist())
+                pbar.update(1)
+            pbar.close()
 
         for component in component_list:
             probas[component][valid_idx, :] = proba[component]
@@ -104,7 +109,7 @@ def main(args):
         scores.append(metrics.recall_score(y_train[:, component_i], pred[component], average='macro'))
     final_score = np.average(scores, weights=[2, 1, 1])
 
-    log = f'[{expid}] {cfg.valid.best_model_name} '
+    log = f'[{expid}] ({best_model_name}) '
     log += f'acc/grapheme {acc["grapheme"]:.4f} vowel {acc["vowel"]:.4f} consonant {acc["consonant"]:.4f} '  # noqa
     log += f'final_score {final_score:.4f}'
     logger.info(log)
@@ -112,6 +117,6 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('config', type=str, default='default.yaml')
+    parser.add_argument('expid', type=str)
     args = parser.parse_args()
     main(args)
