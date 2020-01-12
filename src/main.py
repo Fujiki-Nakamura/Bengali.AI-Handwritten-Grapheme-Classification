@@ -51,11 +51,6 @@ def main(args):
     logger.info(f'Logging at {cfg.general.logdir}')
     logger.info(cfg)
     shutil.copyfile(str(args.config), cfg.general.logdir+'/config.yaml')
-    # model
-    model = models.get_model(cfg=cfg)
-    model = model.to(device)
-    criterion = loss.get_loss_fn(cfg)
-    optimizer = optim.Adam(model.parameters(), lr=cfg.optimizer.lr)
     # data
     X_train = np.load(cfg.data.X_train, allow_pickle=True)
     y_train = np.load(cfg.data.y_train, allow_pickle=True)
@@ -79,6 +74,12 @@ def main(args):
         valid_loader = DataLoader(
             valid_set, batch_size=cfg.training.batch_size, shuffle=False,
             num_workers=cfg.training.n_worker)
+
+        # model
+        model = models.get_model(cfg=cfg)
+        model = model.to(device)
+        criterion = loss.get_loss_fn(cfg)
+        optimizer = optim.Adam(model.parameters(), lr=cfg.optimizer.lr)
 
         best = {'loss': 1e+9, 'score': -1.}
         is_best = {'loss': False, 'score': False}
