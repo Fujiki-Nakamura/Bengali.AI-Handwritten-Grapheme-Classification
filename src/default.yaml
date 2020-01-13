@@ -1,12 +1,16 @@
 general:
     random_state: 42
     device: "cuda:0"
-    # logdir: "/content/drive/My\ Drive/Bengali.AI/logs"
     logdir: "../logs"
 
 data:
     X_train: "../inputs/X_train.npy"
     y_train: "../inputs/y_train.npy"
+    input_h: 137
+    input_w: 236
+    augmentation: [
+        "ShiftScaleRotate/shift_limit=0.075, scale_limit=0.1, rotate_limit=45, interpolation=1, border_mode=0, value=0, p=0.5"
+    ]
 
 model:
     input_dim: 1
@@ -16,6 +20,7 @@ model:
 
 training:
     loss: "CrossEntropyLoss"
+    split: "KFold"
     n_splits: 5
     batch_size: 256
     epochs: 30
@@ -26,4 +31,8 @@ training:
 optimizer:
     name: "Adam"
     lr: !!python/float 1e-3
+<<<<<<< HEAD
     weight_decay: !!python/float 5e-4
+=======
+    weight_decay: !!python/float 0.  # 5e-4
+>>>>>>> dev/data

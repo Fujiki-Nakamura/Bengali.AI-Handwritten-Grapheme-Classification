@@ -9,7 +9,7 @@ import addict
 import yaml
 import numpy as np
 from sklearn.metrics import recall_score
-from sklearn.model_selection import KFold
+from sklearn import model_selection
 import torch
 from torch.nn import functional as F
 import torch.optim as optim
@@ -50,31 +50,35 @@ def main(args):
     logger.info(f'Logging at {cfg.general.logdir}')
     logger.info(cfg)
     shutil.copyfile(str(args.config), cfg.general.logdir+'/config.yaml')
-    # model
-    model = models.get_model(cfg=cfg)
-    model = model.to(device)
-    criterion = loss.get_loss_fn(cfg)
-    optimizer = optim.Adam(model.parameters(), lr=cfg.optimizer.lr)
     # data
     X_train = np.load(cfg.data.X_train, allow_pickle=True)
     y_train = np.load(cfg.data.y_train, allow_pickle=True)
     logger.info('Loaded X_train, y_train')
     # CV
-    kf = KFold(n_splits=cfg.training.n_splits, shuffle=True, random_state=cfg.general.random_state)  # noqa
+    kf = model_selection.__dict__[cfg.training.split](
+        n_splits=cfg.training.n_splits, shuffle=True, random_state=cfg.general.random_state)  # noqa
     score_list = {'loss': [], 'score': []}
-    for fold_i, (train_idx, valid_idx) in enumerate(kf.split(y_train)):
+    for fold_i, (train_idx, valid_idx) in enumerate(
+        kf.split(X=np.zeros(len(y_train)), y=y_train[:, 0])
+    ):
         X_train_ = X_train[train_idx]
         y_train_ = y_train[train_idx]
         X_valid_ = X_train[valid_idx]
         y_valid_ = y_train[valid_idx]
-        train_set = Dataset(X_train_, y_train_, mode='train')
-        valid_set = Dataset(X_valid_, y_valid_, mode='valid')
+        train_set = Dataset(X_train_, y_train_, cfg, mode='train')
+        valid_set = Dataset(X_valid_, y_valid_, cfg, mode='valid')
         train_loader = DataLoader(
             train_set, batch_size=cfg.training.batch_size, shuffle=True,
             num_workers=cfg.training.n_worker)
         valid_loader = DataLoader(
             valid_set, batch_size=cfg.training.batch_size, shuffle=False,
             num_workers=cfg.training.n_worker)
+
+        # model
+        model = models.get_model(cfg=cfg)
+        model = model.to(device)
+        criterion = loss.get_loss_fn(cfg)
+        optimizer = optim.Adam(model.parameters(), lr=cfg.optimizer.lr)
 
         best = {'loss': 1e+9, 'score': -1.}
         is_best = {'loss': False, 'score': False}
