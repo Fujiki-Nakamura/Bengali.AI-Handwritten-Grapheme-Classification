@@ -1,21 +1,27 @@
 general:
     random_state: 42
     device: "cuda:0"
+    logdir: "../logs"
 
 data:
     X_train: "../inputs/X_train.npy"
     y_train: "../inputs/y_train.npy"
-    # input_h: 128
-    # input_w: 128
+    input_h: 137
+    input_w: 236
+    augmentation: [
+        "ShiftScaleRotate/shift_limit=0.075, scale_limit=0.1, rotate_limit=45, interpolation=1, border_mode=0, value=0, p=0.5"
+    ]
+
 
 model:
-    input_dim: 3
+    input_dim: 1
     n_outputs: 186
     name: resnet18
-    pretrained: !!python/bool True
+    pretrained: !!python/bool False
 
 training:
     loss: "CrossEntropyLoss"
+    split: "KFold"
     n_splits: 5
     batch_size: 256
     epochs: 30
@@ -24,6 +30,6 @@ training:
     single_iter: !!python/bool False
 
 optimizer:
-    name: Adam
-    lr: !!python/float 1e-2
+    name: "Adam"
+    lr: !!python/float 1e-3
     weight_decay: !!python/float 0.  # 5e-4
