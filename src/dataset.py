@@ -28,7 +28,7 @@ class MyDataset(Dataset):
             arg_str = aug.split('/')[1]
             transform_list.append(alb.__dict__[name](**parse_arg_str(arg_str)))
         self.transform = alb.Compose([
-            alb.Resize((self.input_h, self.input_w)),
+            alb.Resize(self.input_h, self.input_w),
             ToTensor(),
         ])
 
