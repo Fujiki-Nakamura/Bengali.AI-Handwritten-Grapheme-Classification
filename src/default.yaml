@@ -1,18 +1,17 @@
 general:
     random_state: 42
     device: "cuda:0"
+    # logdir: "/content/drive/My\ Drive/Bengali.AI/logs"
+    logdir: "../logs"
 
 data:
-    csv: ../inputs/train_v2.csv
     X_train: "../inputs/X_train.npy"
     y_train: "../inputs/y_train.npy"
-    input_h: 128
-    input_w: 128
 
 model:
-    input_dim: 3
+    input_dim: 1
     n_outputs: 186
-    name: "vgg19_bn"
+    name: "resnet34"
     pretrained: !!python/bool False
 
 training:
@@ -25,6 +24,6 @@ training:
     single_iter: !!python/bool False
 
 optimizer:
-    name: Adam
+    name: "Adam"
     lr: !!python/float 1e-3
-    weight_decay: !!python/float 0.
+    weight_decay: !!python/float 5e-4

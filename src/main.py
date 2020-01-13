@@ -21,8 +21,6 @@ import models
 import utils
 
 
-LOGDIR = Path('../logs')
-input_d = Path('../inputs')
 N_GRAPHEME = 168
 N_VOWEL = 11
 N_CONSONANT = 7
@@ -42,8 +40,9 @@ def main(args):
     torch.manual_seed(cfg.general.random_state)
 
     # log
-    expid = dt.datetime.now().strftime('%Y%m%d%H%M%S')
-    cfg.general.logdir = str(LOGDIR/expid)
+    # expid = dt.datetime.now().strftime('%Y%m%d%H%M%S')
+    expid = args.expid
+    cfg.general.logdir = os.path.join(cfg.general.logdir, expid)
     if not os.path.exists(cfg.general.logdir):
         os.makedirs(cfg.general.logdir)
     os.chmod(cfg.general.logdir, 0o777)
@@ -166,5 +165,6 @@ def training(dataloader, model, criterion, optimizer, config, is_training=True):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('config', type=str, default='default.yaml')
+    parser.add_argument('--expid', type=str, default='default_expid')
     args = parser.parse_args()
     main(args)
