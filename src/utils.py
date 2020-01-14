@@ -12,10 +12,11 @@ def get_optimizer(params, config):
 
 
 def get_lr_scheduler(optimizer, config):
-    name = config.training.lr_scheduler.name
-    kwargs = parse_arg_str(config.training.lr_scheduler.args)
-    scheduler = optim.lr_scheduler.__dict__[name](optimizer, **kwargs)
-    return scheduler
+    if config.training.get('lr_scheduler', None) is not None:
+        name = config.training.lr_scheduler.name
+        kwargs = parse_arg_str(config.training.lr_scheduler.args)
+        scheduler = optim.lr_scheduler.__dict__[name](optimizer, **kwargs)
+        return scheduler
 
 
 def parse_arg_str(arg_str):
