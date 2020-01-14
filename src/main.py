@@ -12,7 +12,6 @@ from sklearn.metrics import recall_score
 from sklearn import model_selection
 import torch
 from torch.nn import functional as F
-import torch.optim as optim
 from torch.utils.data import DataLoader
 
 from dataset import MyDataset as Dataset
@@ -79,7 +78,8 @@ def main(args):
         model = models.get_model(cfg=cfg)
         model = model.to(device)
         criterion = loss.get_loss_fn(cfg)
-        optimizer = optim.Adam(model.parameters(), lr=cfg.optimizer.lr)
+        optimizer = utils.get_optimizer(model.parameters(), config=cfg)
+        scheduler = utils.get_lr_scheduler(optimizer, config=cfg)
 
         best = {'loss': 1e+9, 'score': -1.}
         is_best = {'loss': False, 'score': False}
@@ -87,6 +87,10 @@ def main(args):
             train = training(train_loader, model, criterion, optimizer, config=cfg)
             valid = training(
                 valid_loader, model, criterion, optimizer, is_training=False, config=cfg)
+            if scheduler is not None:
+                scheduler.step()
+                for param_group in optimizer.param_groups:
+                    current_lr = param_group['lr']
 
             is_best['loss'] = valid['loss'] < best['loss']
             is_best['score'] = valid['score'] > best['score']
@@ -105,9 +109,10 @@ def main(args):
                 state_dict, is_best, Path(cfg.general.logdir)/f'fold_{fold_i}')
 
             log = f'[{expid}] Fold {fold_i+1} Epoch {epoch_i}/{cfg.training.epochs} '
-            log += f'[loss] {train["loss"]:.4f} Val {valid["loss"]:.4f} '
-            log += f'[score] {train["score"]:.4f} Val {valid["score"]:.4f} '
-            log += f'best {best["score"]:.4f} '
+            log += f'[loss] {train["loss"]:.4f}/{valid["loss"]:.4f} '
+            log += f'[score] {train["score"]:.4f}/{valid["score"]:.4f} '
+            log += f'({best["score"]:.4f}) '
+            log += f'lr {current_lr:.6f}'
             logger.info(log)
 
         score_list['loss'].append(best['loss'])
