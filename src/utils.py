@@ -3,6 +3,14 @@ import shutil
 import torch
 
 
+def parse_arg_str(arg_str):
+    arg_dict = {}
+    for arg in arg_str.split(','):
+        arg = arg.strip()
+        arg_dict[arg.split('=')[0]] = eval(arg.split('=')[1])
+    return arg_dict
+
+
 def save_checkpoint(state, is_best, logdir, filename='checkpoint.pt'):
     if not os.path.exists(logdir):
         os.makedirs(logdir)

@@ -3,13 +3,7 @@ import torch
 from torch.utils.data import Dataset
 import albumentations as alb
 from albumentations.pytorch import ToTensor
-
-
-def parse_arg_str(arg_str):
-    arg_dict = {}
-    for arg in arg_str.split(', '):
-        arg_dict[arg.split('=')[0]] = eval(arg.split('=')[1])
-    return arg_dict
+from utils import parse_arg_str
 
 
 class MyDataset(Dataset):
