@@ -84,13 +84,13 @@ def main(args):
         best = {'loss': 1e+9, 'score': -1.}
         is_best = {'loss': False, 'score': False}
         for epoch_i in range(1, 1 + cfg.training.epochs):
+            for param_group in optimizer.param_groups:
+                current_lr = param_group['lr']
             train = training(train_loader, model, criterion, optimizer, config=cfg)
             valid = training(
                 valid_loader, model, criterion, optimizer, is_training=False, config=cfg)
             if scheduler is not None:
                 scheduler.step()
-                for param_group in optimizer.param_groups:
-                    current_lr = param_group['lr']
 
             is_best['loss'] = valid['loss'] < best['loss']
             is_best['score'] = valid['score'] > best['score']
