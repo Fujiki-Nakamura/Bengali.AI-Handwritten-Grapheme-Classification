@@ -41,7 +41,10 @@ def main(args):
     torch.manual_seed(cfg.general.random_state)
 
     # log
-    expid = dt.datetime.now().strftime('%Y%m%d%H%M%S')
+    if cfg.general.expid == '':
+        expid = dt.datetime.now().strftime('%Y%m%d%H%M%S')
+    else:
+        expid = cfg.general.expid
     cfg.general.logdir = str(LOGDIR/expid)
     if not os.path.exists(cfg.general.logdir):
         os.makedirs(cfg.general.logdir)
@@ -61,6 +64,8 @@ def main(args):
     for fold_i, (train_idx, valid_idx) in enumerate(
         kf.split(X=np.zeros(len(y_train)), y=y_train[:, 0])
     ):
+        if fold_i + 1 not in cfg.training.target_folds:
+            continue
         X_train_ = X_train[train_idx]
         y_train_ = y_train[train_idx]
         X_valid_ = X_train[valid_idx]
