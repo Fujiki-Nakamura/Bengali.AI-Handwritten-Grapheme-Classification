@@ -2,12 +2,16 @@ import os
 import shutil
 import torch
 import torch.optim as optim
+from RAdam.radam import RAdam
 
 
 def get_optimizer(params, config):
     name = config.optimizer.name
     kwargs = parse_arg_str(config.optimizer.args)
-    optimizer = optim.__dict__[name](params, **kwargs)
+    if name.lower() == 'RAdam'.lower():
+        optimizer = RAdam(params, **kwargs)
+    else:
+        optimizer = optim.__dict__[name](params, **kwargs)
     return optimizer
 
 
