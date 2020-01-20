@@ -8,17 +8,15 @@ import shutil
 import addict
 import yaml
 import numpy as np
-from sklearn.metrics import recall_score
 from sklearn import model_selection
 import torch
-from torch.nn import functional as F
 from torch.utils.data import DataLoader
 
-from common import component_list
-from common import LOGDIR, N_GRAPHEME, N_VOWEL, N_CONSONANT
+from common import LOGDIR
 from dataset import MyDataset as Dataset
 import loss
 import models
+from trainer import training
 import utils
 
 
@@ -123,53 +121,6 @@ def main(args):
     log += f'[loss] {cfg.training.n_splits}-fold/mean {np.mean(score_list["loss"]):.4f} '
     log += f'[score] {cfg.training.n_splits}-fold/mean {np.mean(score_list["score"]):.4f} '  # noqa
     logger.info(log)
-
-
-def training(dataloader, model, criterion, optimizer, config, is_training=True):
-    device = config.general.device
-    if is_training:
-        model.train()
-    else:
-        model.eval()
-    losses = utils.AverageMeter()
-    pred = {'grapheme': [], 'vowel': [], 'consonant': []}
-    true = {'grapheme': [], 'vowel': [], 'consonant': []}
-    for data, target in dataloader:
-        data = data.to(device)
-        target = target.to(device)
-        with torch.set_grad_enabled(is_training):
-            bs = target.size(0)
-            output = model(data)
-            outputs = torch.split(output, [N_GRAPHEME, N_VOWEL, N_CONSONANT], dim=1)
-            loss_grapheme = criterion(outputs[0], target[:, 0])
-            loss_vowel = criterion(outputs[1], target[:, 1])
-            loss_consonant = criterion(outputs[2], target[:, 2])
-            loss = loss_grapheme + loss_vowel + loss_consonant
-            losses.update(loss.item(), bs)
-
-            if is_training:
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
-
-            pred['grapheme'].extend(
-                F.softmax(outputs[0], dim=1).max(1)[1].detach().cpu().numpy().tolist())
-            pred['vowel'].extend(
-                F.softmax(outputs[1], dim=1).max(1)[1].detach().cpu().numpy().tolist())
-            pred['consonant'].extend(
-                F.softmax(outputs[2], dim=1).max(1)[1].detach().cpu().numpy().tolist())
-            true['grapheme'].extend(target[:, 0].cpu().numpy().tolist())
-            true['vowel'].extend(target[:, 1].cpu().numpy().tolist())
-            true['consonant'].extend(target[:, 2].cpu().numpy().tolist())
-
-        if config.training.single_iter: break  # noqa
-
-    scores = []
-    for component in ['grapheme', 'consonant', 'vowel']:
-        scores.append(recall_score(true[component], pred[component], average='macro'))
-    final_score = np.average(scores, weights=[2, 1, 1])
-
-    return {'loss': losses.avg, 'score': final_score}
 
 
 if __name__ == '__main__':
