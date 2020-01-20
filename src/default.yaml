@@ -2,11 +2,11 @@ general:
     random_state: 42
     device: "cuda:0"
     logdir: "../logs"
-    expid: ""  # "20200115151241"
+    expid: ""
 
 data:
     X_train: "../inputs/X_train.npy"
-    y_train: "../inputs/y_train_ohe.npy"
+    y_train: "../inputs/y_train.npy"
     input_h: 137
     input_w: 236
     augmentation: [
@@ -15,6 +15,9 @@ data:
     ]
 
 cutmix:
+    prob: !!python/float 0.  # 0.5
+    beta: !!python/float 0.  # 1.0
+mixup:
     prob: !!python/float 0.5
     beta: !!python/float 1.0
 
@@ -25,7 +28,7 @@ model:
     pretrained: !!python/bool False
 
 training:
-    loss: "BCEWithLogitsLoss"
+    loss: "CrossEntropyLoss"
     split: "KFold"
     n_splits: 5
     target_folds: [1, ]  # 2, 3, 4, 5]
