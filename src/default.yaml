@@ -10,16 +10,22 @@ data:
     input_h: 137
     input_w: 236
     augmentation: [
-        "ShiftScaleRotate/shift_limit=0.075, scale_limit=0.1, rotate_limit=45, interpolation=1, border_mode=0, value=0, p=0.5",
-        "Cutout/num_holes=1, max_h_size=int(137*0.35), max_w_size=int(236*0.35), fill_value=0, always_apply=False, p=0.5"
+        # "ShiftScaleRotate/shift_limit=0.075, scale_limit=0.1, rotate_limit=45, interpolation=1, border_mode=0, value=0, p=0.5",
+        # "Cutout/num_holes=1, max_h_size=int(137*0.35), max_w_size=int(236*0.35), fill_value=0, always_apply=False, p=0.5"
     ]
 
+cutmix:
+    prob: !!python/float 0.  # 0.5
+    beta: !!python/float 0.  # 1.0
+mixup:
+    prob: !!python/float 0.5
+    beta: !!python/float 1.0
 
 model:
-    input_dim: 3
+    input_dim: 1
     n_outputs: 186
     name: "resnet34"
-    pretrained: !!python/bool True
+    pretrained: !!python/bool False
 
 training:
     loss: "CrossEntropyLoss"
