@@ -9,10 +9,9 @@ import addict
 import yaml
 import numpy as np
 from sklearn.metrics import recall_score
-from sklearn.model_selection import KFold
+from sklearn import model_selection
 import torch
 from torch.nn import functional as F
-import torch.optim as optim
 from torch.utils.data import DataLoader
 
 from dataset import MyDataset as Dataset
@@ -42,7 +41,10 @@ def main(args):
     torch.manual_seed(cfg.general.random_state)
 
     # log
-    expid = dt.datetime.now().strftime('%Y%m%d%H%M%S')
+    if cfg.general.expid == '':
+        expid = dt.datetime.now().strftime('%Y%m%d%H%M%S')
+    else:
+        expid = cfg.general.expid
     cfg.general.logdir = str(LOGDIR/expid)
     if not os.path.exists(cfg.general.logdir):
         os.makedirs(cfg.general.logdir)
@@ -51,19 +53,19 @@ def main(args):
     logger.info(f'Logging at {cfg.general.logdir}')
     logger.info(cfg)
     shutil.copyfile(str(args.config), cfg.general.logdir+'/config.yaml')
-    # model
-    model = models.get_model(cfg=cfg)
-    model = model.to(device)
-    criterion = loss.get_loss_fn(cfg)
-    optimizer = optim.Adam(model.parameters(), lr=cfg.optimizer.lr)
     # data
     X_train = np.load(cfg.data.X_train, allow_pickle=True)
     y_train = np.load(cfg.data.y_train, allow_pickle=True)
     logger.info('Loaded X_train, y_train')
     # CV
-    kf = KFold(n_splits=cfg.training.n_splits, shuffle=True, random_state=cfg.general.random_state)  # noqa
+    kf = model_selection.__dict__[cfg.training.split](
+        n_splits=cfg.training.n_splits, shuffle=True, random_state=cfg.general.random_state)  # noqa
     score_list = {'loss': [], 'score': []}
-    for fold_i, (train_idx, valid_idx) in enumerate(kf.split(y_train)):
+    for fold_i, (train_idx, valid_idx) in enumerate(
+        kf.split(X=np.zeros(len(y_train)), y=y_train[:, 0])
+    ):
+        if fold_i + 1 not in cfg.training.target_folds:
+            continue
         X_train_ = X_train[train_idx]
         y_train_ = y_train[train_idx]
         X_valid_ = X_train[valid_idx]
@@ -77,12 +79,23 @@ def main(args):
             valid_set, batch_size=cfg.training.batch_size, shuffle=False,
             num_workers=cfg.training.n_worker)
 
+        # model
+        model = models.get_model(cfg=cfg)
+        model = model.to(device)
+        criterion = loss.get_loss_fn(cfg)
+        optimizer = utils.get_optimizer(model.parameters(), config=cfg)
+        scheduler = utils.get_lr_scheduler(optimizer, config=cfg)
+
         best = {'loss': 1e+9, 'score': -1.}
         is_best = {'loss': False, 'score': False}
         for epoch_i in range(1, 1 + cfg.training.epochs):
+            for param_group in optimizer.param_groups:
+                current_lr = param_group['lr']
             train = training(train_loader, model, criterion, optimizer, config=cfg)
             valid = training(
                 valid_loader, model, criterion, optimizer, is_training=False, config=cfg)
+            if scheduler is not None:
+                scheduler.step()
 
             is_best['loss'] = valid['loss'] < best['loss']
             is_best['score'] = valid['score'] > best['score']
@@ -101,9 +114,10 @@ def main(args):
                 state_dict, is_best, Path(cfg.general.logdir)/f'fold_{fold_i}')
 
             log = f'[{expid}] Fold {fold_i+1} Epoch {epoch_i}/{cfg.training.epochs} '
-            log += f'[loss] {train["loss"]:.4f} Val {valid["loss"]:.4f} '
-            log += f'[score] {train["score"]:.4f} Val {valid["score"]:.4f} '
-            log += f'best {best["score"]:.4f} '
+            log += f'[loss] {train["loss"]:.4f}/{valid["loss"]:.4f} '
+            log += f'[score] {train["score"]:.4f}/{valid["score"]:.4f} '
+            log += f'({best["score"]:.4f}) '
+            log += f'lr {current_lr:.6f}'
             logger.info(log)
 
         score_list['loss'].append(best['loss'])

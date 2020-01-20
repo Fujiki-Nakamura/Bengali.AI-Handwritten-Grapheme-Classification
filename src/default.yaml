@@ -1,29 +1,42 @@
 general:
     random_state: 42
     device: "cuda:0"
+    logdir: "../logs"
+    expid: ""
 
 data:
     X_train: "../inputs/X_train.npy"
     y_train: "../inputs/y_train.npy"
-    # input_h: 128
-    # input_w: 128
+    input_h: 137
+    input_w: 236
+    augmentation: [
+        "ShiftScaleRotate/shift_limit=0.075, scale_limit=0.1, rotate_limit=45, interpolation=1, border_mode=0, value=0, p=0.5",
+        "Cutout/num_holes=1, max_h_size=int(137*0.35), max_w_size=int(236*0.35), fill_value=0, always_apply=False, p=0.5"
+    ]
+
 
 model:
     input_dim: 3
     n_outputs: 186
-    name: resnet18
+    name: "resnet34"
     pretrained: !!python/bool True
 
 training:
     loss: "CrossEntropyLoss"
+    split: "KFold"
     n_splits: 5
+    target_folds: [1, ]  # 2, 3, 4, 5]
     batch_size: 256
-    epochs: 30
-    n_worker: 4
+    epochs: 300
+    n_worker: 8
     single_fold: !!python/bool False
     single_iter: !!python/bool False
+    # lr_scheduler:
+    #     name: "CosineAnnealingLR"
+    #     args: "T_max=10, eta_min=1e-3, last_epoch=-1"
 
 optimizer:
-    name: Adam
-    lr: !!python/float 1e-2
-    weight_decay: !!python/float 0.  # 5e-4
+    # name: "SGD"
+    # args: "lr=1e-1, weight_decay=0., momentum=0.9, nesterov=True"
+    name: "RAdam"
+    args: "lr=1e-3, weight_decay=0."

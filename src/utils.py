@@ -1,6 +1,34 @@
 import os
 import shutil
 import torch
+import torch.optim as optim
+from RAdam.radam import RAdam
+
+
+def get_optimizer(params, config):
+    name = config.optimizer.name
+    kwargs = parse_arg_str(config.optimizer.args)
+    if name.lower() == 'RAdam'.lower():
+        optimizer = RAdam(params, **kwargs)
+    else:
+        optimizer = optim.__dict__[name](params, **kwargs)
+    return optimizer
+
+
+def get_lr_scheduler(optimizer, config):
+    if config.training.get('lr_scheduler', None) is not None:
+        name = config.training.lr_scheduler.name
+        kwargs = parse_arg_str(config.training.lr_scheduler.args)
+        scheduler = optim.lr_scheduler.__dict__[name](optimizer, **kwargs)
+        return scheduler
+
+
+def parse_arg_str(arg_str):
+    arg_dict = {}
+    for arg in arg_str.split(','):
+        arg = arg.strip()
+        arg_dict[arg.split('=')[0]] = eval(arg.split('=')[1])
+    return arg_dict
 
 
 def save_checkpoint(state, is_best, logdir, filename='checkpoint.pt'):
