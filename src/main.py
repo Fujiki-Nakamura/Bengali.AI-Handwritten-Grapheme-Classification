@@ -14,17 +14,12 @@ import torch
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
 
+from common import component_list
+from common import LOGDIR, N_GRAPHEME, N_VOWEL, N_CONSONANT
 from dataset import MyDataset as Dataset
 import loss
 import models
 import utils
-
-
-LOGDIR = Path('../logs')
-input_d = Path('../inputs')
-N_GRAPHEME = 168
-N_VOWEL = 11
-N_CONSONANT = 7
 
 
 def main(args):
