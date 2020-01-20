@@ -38,6 +38,18 @@ def training(dataloader, model, criterion, optimizer, config, is_training=True):
                 for i in range(len(component_list)):
                     loss += criterion(outputs[i], target_a[:, i]) * lam + criterion(
                             outputs[i], target_b[:, i]) * (1. - lam)
+            elif is_training and config.mixup.beta > 0 and r < config.mixup.prob:
+                lam = np.random.beta(config.mixup.beta, config.mixup.beta)
+                rand_index = torch.randperm(data.size()[0]).cuda()
+                target_a = target
+                target_b = target[rand_index]
+                data = data * lam + data[rand_index] * (1 - lam)
+                output = model(data)
+                outputs = torch.split(output, [N_GRAPHEME, N_VOWEL, N_CONSONANT], dim=1)
+                loss = 0.
+                for i in range(len(component_list)):
+                    loss += criterion(outputs[i], target_a[:, i]) * lam + criterion(
+                            outputs[i], target_b[:, i]) * (1. - lam)
             else:
                 output = model(data)
                 outputs = torch.split(output, [N_GRAPHEME, N_VOWEL, N_CONSONANT], dim=1)
