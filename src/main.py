@@ -67,10 +67,10 @@ def main(args):
         valid_set = Dataset(X_valid_, y_valid_, cfg, mode='valid')
         train_loader = DataLoader(
             train_set, batch_size=cfg.training.batch_size, shuffle=True,
-            num_workers=cfg.training.n_worker)
+            num_workers=cfg.training.n_worker, pin_memory=True)
         valid_loader = DataLoader(
             valid_set, batch_size=cfg.training.batch_size, shuffle=False,
-            num_workers=cfg.training.n_worker)
+            num_workers=cfg.training.n_worker, pin_memory=True)
 
         # model
         model = models.get_model(cfg=cfg)
