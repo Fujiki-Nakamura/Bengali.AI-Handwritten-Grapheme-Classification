@@ -65,6 +65,9 @@ def main(args):
         y_valid_ = y_train[valid_idx]
         train_set = Dataset(X_train_, y_train_, cfg, mode='train')
         valid_set = Dataset(X_valid_, y_valid_, cfg, mode='valid')
+        if fold_i == 0:
+            logger.info(train_set.transform)
+            logger.info(valid_set.transform)
         train_loader = DataLoader(
             train_set, batch_size=cfg.training.batch_size, shuffle=True,
             num_workers=cfg.training.n_worker, pin_memory=True)
