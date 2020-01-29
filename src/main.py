@@ -102,9 +102,11 @@ def main(args):
             state_dict = {
                 'epoch': epoch_i,
                 'state_dict': model.state_dict(),
+                'optimizer': optimizer.state_dict(),
                 'loss/valid': valid['loss'],
                 'score/valid': valid['score'],
-                'optimizer': optimizer.state_dict(),
+                'loss/best': best['loss'],
+                'score/best': best['score'],
             }
             utils.save_checkpoint(
                 state_dict, is_best, Path(cfg.general.logdir)/f'fold_{fold_i}')
