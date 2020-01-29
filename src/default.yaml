@@ -7,25 +7,28 @@ general:
 data:
     X_train: "../inputs/X_train.npy"
     y_train: "../inputs/y_train.npy"
-    input_h: 137
-    input_w: 236
+    input_h: 224  # 137
+    input_w: 224  # 236
     augmentation: [
-        # "ShiftScaleRotate/shift_limit=0.075, scale_limit=0.1, rotate_limit=45, interpolation=1, border_mode=0, value=0, p=0.5",
-        # "Cutout/num_holes=1, max_h_size=int(137*0.35), max_w_size=int(236*0.35), fill_value=0, always_apply=False, p=0.5"
+        "GaussianBlur/blur_limit=31, always_apply=False, p=0.5",
+        "Cutout/num_holes=1, max_h_size=int(224*0.35), max_w_size=int(224*0.35), fill_value=0, always_apply=False, p=0.5",
+        "Cutout/num_holes=1, max_h_size=int(224*0.35), max_w_size=int(224*0.35), fill_value=0, always_apply=False, p=0.5",
+        "ShiftScaleRotate/shift_limit=0.075, scale_limit=0.1, rotate_limit=30, interpolation=1, border_mode=0, value=0, p=0.5",
     ]
 
 cutmix:
     prob: !!python/float 0.  # 0.5
     beta: !!python/float 0.  # 1.0
 mixup:
-    prob: !!python/float 0.5
-    beta: !!python/float 1.0
+    prob: !!python/float 0.  # 0.5
+    beta: !!python/float 0.  # 1.0
 
 model:
     input_dim: 1
     n_outputs: 186
     name: "resnet34"
     pretrained: !!python/bool False
+    # resume: "../logs/20200127144339/fold_0/checkpoint.pt"
 
 training:
     loss: "CrossEntropyLoss"
@@ -33,7 +36,7 @@ training:
     n_splits: 5
     target_folds: [1, ]  # 2, 3, 4, 5]
     batch_size: 256
-    epochs: 300
+    epochs: 1000
     n_worker: 8
     single_fold: !!python/bool False
     single_iter: !!python/bool False
