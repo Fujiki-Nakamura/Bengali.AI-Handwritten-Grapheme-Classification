@@ -91,8 +91,8 @@ def main(args):
             if os.path.isfile(cfg.model.resume):
                 checkpoint = torch.load(cfg.model.resume)
                 start_epoch = checkpoint['epoch'] + 1
-                best['loss'] = 0.1219986957653517  # checkpoint['loss/best']
-                best['score'] = 0.9894430317165759  # checkpoint['score/best']
+                best['loss'] = checkpoint['loss/best']
+                best['score'] = checkpoint['score/best']
                 model.load_state_dict(checkpoint['state_dict'])
                 optimizer.load_state_dict(checkpoint['optimizer'])
                 logger.info('Loaded checkpoint {} (epoch {})'.format(
