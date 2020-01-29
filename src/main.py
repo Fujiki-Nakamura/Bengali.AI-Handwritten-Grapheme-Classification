@@ -82,9 +82,25 @@ def main(args):
         optimizer = utils.get_optimizer(model.parameters(), config=cfg)
         scheduler = utils.get_lr_scheduler(optimizer, config=cfg)
 
+        start_epoch = 1
         best = {'loss': 1e+9, 'score': -1.}
         is_best = {'loss': False, 'score': False}
-        for epoch_i in range(1, 1 + cfg.training.epochs):
+
+        # resume
+        if cfg.model.resume:
+            if os.path.isfile(cfg.model.resume):
+                checkpoint = torch.load(cfg.model.resume)
+                start_epoch = checkpoint['epoch'] + 1
+                best['loss'] = 0.1219986957653517  # checkpoint['loss/best']
+                best['score'] = 0.9894430317165759  # checkpoint['score/best']
+                model.load_state_dict(checkpoint['state_dict'])
+                optimizer.load_state_dict(checkpoint['optimizer'])
+                logger.info('Loaded checkpoint {} (epoch {})'.format(
+                    cfg.model.resume, start_epoch - 1))
+            else:
+                raise IOError('No such file {}'.format(args.resume))
+
+        for epoch_i in range(start_epoch, start_epoch + cfg.training.epochs):
             for param_group in optimizer.param_groups:
                 current_lr = param_group['lr']
             train = training(train_loader, model, criterion, optimizer, config=cfg)
