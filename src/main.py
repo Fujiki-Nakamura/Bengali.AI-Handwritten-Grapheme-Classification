@@ -100,7 +100,7 @@ def main(args):
             else:
                 raise IOError('No such file {}'.format(args.resume))
 
-        for epoch_i in range(start_epoch, start_epoch + cfg.training.epochs):
+        for epoch_i in range(start_epoch, cfg.training.epochs):
             for param_group in optimizer.param_groups:
                 current_lr = param_group['lr']
             train = training(train_loader, model, criterion, optimizer, config=cfg)
