@@ -13,9 +13,9 @@ class GridMask(DualTransform):
     Args:
         num_grid (int): number of grid in a row or column.
         fill_value (int, float, lisf of int, list of float): value for dropped pixels.
-        rotate ((int, int) or int): range from which a random angle is picked. 
-	    If rotate is a single int an angle is picked from (-rotate, rotate). 
-	    Default: (-90, 90)
+        rotate ((int, int) or int): range from which a random angle is picked.
+            If rotate is a single int an angle is picked from (-rotate, rotate).
+            Default: (-90, 90)
         mode (int):
             0 - cropout a quarter of the square of each grid (left top)
             1 - reserve a quarter of the square of each grid (left top)
@@ -33,7 +33,7 @@ class GridMask(DualTransform):
     """
 
     def __init__(
-	self, num_grid=3, fill_value=0, rotate=0, mode=0, always_apply=False, p=0.5
+        self, num_grid=3, fill_value=0, rotate=0, mode=0, always_apply=False, p=0.5
     ):
         super(GridMask, self).__init__(always_apply, p)
         if isinstance(num_grid, int):
@@ -55,19 +55,20 @@ class GridMask(DualTransform):
             for n, n_g in enumerate(range(self.num_grid[0], self.num_grid[1] + 1, 1)):
                 grid_h = height / n_g
                 grid_w = width / n_g
-                this_mask = np.ones((int((n_g + 1) * grid_h), int((n_g + 1) * grid_w))).astype(np.uint8)
+                this_mask = np.ones(
+                    (int((n_g + 1) * grid_h), int((n_g + 1) * grid_w))).astype(np.uint8)
                 for i in range(n_g + 1):
                     for j in range(n_g + 1):
                         this_mask[
-                             int(i * grid_h) : int(i * grid_h + grid_h / 2),
-                             int(j * grid_w) : int(j * grid_w + grid_w / 2)
+                            int(i * grid_h): int(i * grid_h + grid_h / 2),
+                            int(j * grid_w): int(j * grid_w + grid_w / 2)
                         ] = self.fill_value
                         if self.mode == 2:
                             this_mask[
-                                 int(i * grid_h + grid_h / 2) : int(i * grid_h + grid_h),
-                                 int(j * grid_w + grid_w / 2) : int(j * grid_w + grid_w)
+                                int(i * grid_h + grid_h / 2): int(i * grid_h + grid_h),
+                                int(j * grid_w + grid_w / 2): int(j * grid_w + grid_w)
                             ] = self.fill_value
-                
+
                 if self.mode == 1:
                     this_mask = 1 - this_mask
 
@@ -78,7 +79,7 @@ class GridMask(DualTransform):
     def apply(self, image, mask, rand_h, rand_w, angle, **params):
         h, w = image.shape[:2]
         mask = F.rotate(mask, angle) if self.rotate[1] > 0 else mask
-        mask = mask[:,:,np.newaxis] if image.ndim == 3 else mask
+        mask = mask[:, :, np.newaxis] if image.ndim == 3 else mask
         image *= mask[rand_h:rand_h+h, rand_w:rand_w+w].astype(image.dtype)
         return image
 
@@ -91,7 +92,8 @@ class GridMask(DualTransform):
         mask = self.masks[mid]
         rand_h = np.random.randint(self.rand_h_max[mid])
         rand_w = np.random.randint(self.rand_w_max[mid])
-        angle = np.random.randint(self.rotate[0], self.rotate[1]) if self.rotate[1] > 0 else 0
+        angle = np.random.randint(
+            self.rotate[0], self.rotate[1]) if self.rotate[1] > 0 else 0
 
         return {'mask': mask, 'rand_h': rand_h, 'rand_w': rand_w, 'angle': angle}
 
