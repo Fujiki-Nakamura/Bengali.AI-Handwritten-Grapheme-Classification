@@ -25,7 +25,7 @@ def get_lr_scheduler(optimizer, config):
 
 def parse_arg_str(arg_str):
     arg_dict = {}
-    for arg in arg_str.split(','):
+    for arg in arg_str.split(', '):
         arg = arg.strip()
         arg_dict[arg.split('=')[0]] = eval(arg.split('=')[1])
     return arg_dict

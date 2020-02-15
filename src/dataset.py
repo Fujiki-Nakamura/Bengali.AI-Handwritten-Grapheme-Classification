@@ -19,15 +19,14 @@ class MyDataset(Dataset):
 
         # transform
         transform_list = []
+        transform_list.append(alb.Resize(height=self.input_h, width=self.input_w))
         if self.is_training:
             for aug in config.data.augmentation:
                 name = aug.split('/')[0]
                 arg_str = aug.split('/')[1]
                 transform_list.append(alb.__dict__[name](**parse_arg_str(arg_str)))
-        self.transform = alb.Compose([
-            alb.Resize(self.input_h, self.input_w),
-            ToTensor(),
-        ])
+        transform_list.append(ToTensor())
+        self.transform = alb.Compose(transform_list)
 
     def __len__(self):
         return len(self.label)

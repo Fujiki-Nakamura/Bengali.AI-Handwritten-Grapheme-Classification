@@ -8,23 +8,16 @@ import shutil
 import addict
 import yaml
 import numpy as np
-from sklearn.metrics import recall_score
 from sklearn import model_selection
 import torch
-from torch.nn import functional as F
 from torch.utils.data import DataLoader
 
+from common import LOGDIR
 from dataset import MyDataset as Dataset
 import loss
 import models
+from trainer import training
 import utils
-
-
-LOGDIR = Path('../logs')
-input_d = Path('../inputs')
-N_GRAPHEME = 168
-N_VOWEL = 11
-N_CONSONANT = 7
 
 
 def main(args):
@@ -72,12 +65,15 @@ def main(args):
         y_valid_ = y_train[valid_idx]
         train_set = Dataset(X_train_, y_train_, cfg, mode='train')
         valid_set = Dataset(X_valid_, y_valid_, cfg, mode='valid')
+        if fold_i == 0:
+            logger.info(train_set.transform)
+            logger.info(valid_set.transform)
         train_loader = DataLoader(
             train_set, batch_size=cfg.training.batch_size, shuffle=True,
-            num_workers=cfg.training.n_worker)
+            num_workers=cfg.training.n_worker, pin_memory=True)
         valid_loader = DataLoader(
             valid_set, batch_size=cfg.training.batch_size, shuffle=False,
-            num_workers=cfg.training.n_worker)
+            num_workers=cfg.training.n_worker, pin_memory=True)
 
         # model
         model = models.get_model(cfg=cfg)
@@ -86,9 +82,25 @@ def main(args):
         optimizer = utils.get_optimizer(model.parameters(), config=cfg)
         scheduler = utils.get_lr_scheduler(optimizer, config=cfg)
 
+        start_epoch = 1
         best = {'loss': 1e+9, 'score': -1.}
         is_best = {'loss': False, 'score': False}
-        for epoch_i in range(1, 1 + cfg.training.epochs):
+
+        # resume
+        if cfg.model.resume:
+            if os.path.isfile(cfg.model.resume):
+                checkpoint = torch.load(cfg.model.resume)
+                start_epoch = checkpoint['epoch'] + 1
+                best['loss'] = checkpoint['loss/best']
+                best['score'] = checkpoint['score/best']
+                model.load_state_dict(checkpoint['state_dict'])
+                optimizer.load_state_dict(checkpoint['optimizer'])
+                logger.info('Loaded checkpoint {} (epoch {})'.format(
+                    cfg.model.resume, start_epoch - 1))
+            else:
+                raise IOError('No such file {}'.format(args.resume))
+
+        for epoch_i in range(start_epoch, cfg.training.epochs):
             for param_group in optimizer.param_groups:
                 current_lr = param_group['lr']
             train = training(train_loader, model, criterion, optimizer, config=cfg)
@@ -106,9 +118,11 @@ def main(args):
             state_dict = {
                 'epoch': epoch_i,
                 'state_dict': model.state_dict(),
+                'optimizer': optimizer.state_dict(),
                 'loss/valid': valid['loss'],
                 'score/valid': valid['score'],
-                'optimizer': optimizer.state_dict(),
+                'loss/best': best['loss'],
+                'score/best': best['score'],
             }
             utils.save_checkpoint(
                 state_dict, is_best, Path(cfg.general.logdir)/f'fold_{fold_i}')
@@ -128,53 +142,6 @@ def main(args):
     log += f'[loss] {cfg.training.n_splits}-fold/mean {np.mean(score_list["loss"]):.4f} '
     log += f'[score] {cfg.training.n_splits}-fold/mean {np.mean(score_list["score"]):.4f} '  # noqa
     logger.info(log)
-
-
-def training(dataloader, model, criterion, optimizer, config, is_training=True):
-    device = config.general.device
-    if is_training:
-        model.train()
-    else:
-        model.eval()
-    losses = utils.AverageMeter()
-    pred = {'grapheme': [], 'vowel': [], 'consonant': []}
-    true = {'grapheme': [], 'vowel': [], 'consonant': []}
-    for data, target in dataloader:
-        data = data.to(device)
-        target = target.to(device)
-        with torch.set_grad_enabled(is_training):
-            bs = target.size(0)
-            output = model(data)
-            outputs = torch.split(output, [N_GRAPHEME, N_VOWEL, N_CONSONANT], dim=1)
-            loss_grapheme = criterion(outputs[0], target[:, 0])
-            loss_vowel = criterion(outputs[1], target[:, 1])
-            loss_consonant = criterion(outputs[2], target[:, 2])
-            loss = loss_grapheme + loss_vowel + loss_consonant
-            losses.update(loss.item(), bs)
-
-            if is_training:
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
-
-            pred['grapheme'].extend(
-                F.softmax(outputs[0], dim=1).max(1)[1].detach().cpu().numpy().tolist())
-            pred['vowel'].extend(
-                F.softmax(outputs[1], dim=1).max(1)[1].detach().cpu().numpy().tolist())
-            pred['consonant'].extend(
-                F.softmax(outputs[2], dim=1).max(1)[1].detach().cpu().numpy().tolist())
-            true['grapheme'].extend(target[:, 0].cpu().numpy().tolist())
-            true['vowel'].extend(target[:, 1].cpu().numpy().tolist())
-            true['consonant'].extend(target[:, 2].cpu().numpy().tolist())
-
-        if config.training.single_iter: break  # noqa
-
-    scores = []
-    for component in ['grapheme', 'consonant', 'vowel']:
-        scores.append(recall_score(true[component], pred[component], average='macro'))
-    final_score = np.average(scores, weights=[2, 1, 1])
-
-    return {'loss': losses.avg, 'score': final_score}
 
 
 if __name__ == '__main__':
