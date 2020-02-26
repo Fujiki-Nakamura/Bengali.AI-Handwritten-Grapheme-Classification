@@ -48,6 +48,8 @@ training:
     # lr_scheduler:
     #     name: "CosineAnnealingLR"
     #     args: "T_max=10, eta_min=1e-3, last_epoch=-1"
+    #     name: "ReduceLROnPlateau"
+    #     args: "mode='min', factor=0.1, patience=10"
 
 optimizer:
     # name: "SGD"
