@@ -33,6 +33,9 @@ model:
 
 training:
     loss: "CrossEntropyLoss"
+    # NOTE: ['grapheme', 'vowel', 'consonant']
+    coef_list: [2.0, 1.0, 1.0]
+    # coef_list: [1.0, 1.0, 1.0]
     split: "KFold"
     n_splits: 5
     target_folds: [1,]
