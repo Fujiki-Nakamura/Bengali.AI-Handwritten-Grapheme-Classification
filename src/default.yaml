@@ -26,10 +26,12 @@ mixup:
     # beta: !!python/float  1.0
 
 model:
-    input_dim: 1
+    input_dim: 3
     n_outputs: 186
-    name: "resnet34"
-    pretrained: !!python/bool False
+    # name: "resnet34"
+    # pretrained: !!python/bool False
+    name: "se_resnext50_32x4d"
+    pretrained_type: "imagenet"
 
 training:
     loss: "CrossEntropyLoss"
@@ -40,20 +42,20 @@ training:
     n_splits: 5
     target_folds: [1,]
     # target_folds: [1, 2, 3, 4, 5]
-    batch_size: 256
-    epochs: 3000
+    batch_size: 64
+    epochs: 100
     n_worker: 8
     single_fold: !!python/bool False
     single_iter: !!python/bool False
-    # lr_scheduler:
+    lr_scheduler:
     #     name: "CosineAnnealingLR"
     #     args: "T_max=10, eta_min=1e-3, last_epoch=-1"
-    #     name: "ReduceLROnPlateau"
-    #     args: "mode='min', factor=0.1, patience=10"
+        name: "ReduceLROnPlateau"
+        args: "mode='min', factor=0.1, patience=10"
 
 optimizer:
     # name: "SGD"
     # args: "lr=1e-1, weight_decay=0., momentum=0.9, nesterov=True"
     name: "RAdam"
-    args: "lr=1e-3, weight_decay=0."
-    # args: "lr=1e-3, weight_decay=1e-4"
+    # args: "lr=1e-3, weight_decay=0."
+    args: "lr=1e-4, weight_decay=1e-4"
