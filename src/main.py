@@ -98,7 +98,7 @@ def main(args):
                 logger.info('Loaded checkpoint {} (epoch {})'.format(
                     cfg.model.resume, start_epoch - 1))
             else:
-                raise IOError('No such file {}'.format(args.resume))
+                raise IOError('No such file {}'.format(cfg.model.resume))
 
         for epoch_i in range(start_epoch, cfg.training.epochs):
             for param_group in optimizer.param_groups:
