@@ -55,6 +55,8 @@ def plot_learning_curve(expid, target_folds=[1, 2, 3, 4, 5]):
                      title=f'{expid} / Fold {n_fold} / Score')
         plt.show()
 
+    return results_d
+
 
 def plot_learning_curve_2(expid, folds=[1, 2, 3, 4, 5], epochs=30):
     log_d = logs_d/expid
