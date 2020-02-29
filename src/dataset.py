@@ -25,7 +25,7 @@ class MyDataset(Dataset):
         # transform
         transform_list = []
         transform_list.append(alb.Resize(height=self.input_h, width=self.input_w))
-        if self.is_training:
+        if self.is_training and len(config.data.augmentation) > 0:
             aug_list = eval(config.data.augmentation[0])
             transform_list.extend(aug_list)
         transform_list.append(ToTensor())
