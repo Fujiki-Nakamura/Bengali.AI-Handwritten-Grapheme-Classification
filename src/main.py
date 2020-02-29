@@ -98,16 +98,25 @@ def main(args):
                 logger.info('Loaded checkpoint {} (epoch {})'.format(
                     cfg.model.resume, start_epoch - 1))
             else:
-                raise IOError('No such file {}'.format(args.resume))
+                raise IOError('No such file {}'.format(cfg.model.resume))
 
-        for epoch_i in range(start_epoch, cfg.training.epochs):
+        for epoch_i in range(start_epoch, cfg.training.epochs + 1):
             for param_group in optimizer.param_groups:
                 current_lr = param_group['lr']
             train = training(train_loader, model, criterion, optimizer, config=cfg)
             valid = training(
                 valid_loader, model, criterion, optimizer, is_training=False, config=cfg)
             if scheduler is not None:
-                scheduler.step()
+                if cfg.training.lr_scheduler.name == 'ReduceLROnPlateau':
+                    if scheduler.mode == 'min':
+                        value = valid['loss']
+                    elif scheduler.mode == 'max':
+                        value = valid['score']
+                    else:
+                        raise NotImplementedError
+                    scheduler.step(value)
+                else:
+                    scheduler.step()
 
             is_best['loss'] = valid['loss'] < best['loss']
             is_best['score'] = valid['score'] > best['score']

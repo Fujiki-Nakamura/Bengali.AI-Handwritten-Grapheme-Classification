@@ -3,7 +3,12 @@ import torch
 from torch.utils.data import Dataset
 import albumentations as alb
 from albumentations.pytorch import ToTensor
+
+import augment
 from utils import parse_arg_str
+
+
+augment_name_list = ['GridMask', ]
 
 
 class MyDataset(Dataset):
@@ -24,7 +29,11 @@ class MyDataset(Dataset):
             for aug in config.data.augmentation:
                 name = aug.split('/')[0]
                 arg_str = aug.split('/')[1]
-                transform_list.append(alb.__dict__[name](**parse_arg_str(arg_str)))
+                if name in augment_name_list:
+                    transform_list.append(
+                        augment.__dict__[name](**parse_arg_str(arg_str)))
+                else:
+                    transform_list.append(alb.__dict__[name](**parse_arg_str(arg_str)))
         transform_list.append(ToTensor())
         self.transform = alb.Compose(transform_list)
 

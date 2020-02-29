@@ -8,6 +8,7 @@ import utils
 
 
 def training(dataloader, model, criterion, optimizer, config, is_training=True):
+    cfg = config
     device = config.general.device
     if is_training:
         model.train()
@@ -36,7 +37,8 @@ def training(dataloader, model, criterion, optimizer, config, is_training=True):
                 outputs = torch.split(output, [N_GRAPHEME, N_VOWEL, N_CONSONANT], dim=1)
                 loss = 0.
                 for i in range(len(component_list)):
-                    loss += criterion(outputs[i], target_a[:, i]) * lam + criterion(
+                    coef = cfg.training.coef_list[i]
+                    loss += coef * criterion(outputs[i], target_a[:, i]) * lam + criterion(
                             outputs[i], target_b[:, i]) * (1. - lam)
             elif is_training and config.mixup.beta > 0 and r < config.mixup.prob:
                 lam = np.random.beta(config.mixup.beta, config.mixup.beta)
@@ -48,7 +50,8 @@ def training(dataloader, model, criterion, optimizer, config, is_training=True):
                 outputs = torch.split(output, [N_GRAPHEME, N_VOWEL, N_CONSONANT], dim=1)
                 loss = 0.
                 for i in range(len(component_list)):
-                    loss += criterion(outputs[i], target_a[:, i]) * lam + criterion(
+                    coef = cfg.training.coef_list[i]
+                    loss += coef * criterion(outputs[i], target_a[:, i]) * lam + criterion(
                             outputs[i], target_b[:, i]) * (1. - lam)
             else:
                 output = model(data)
@@ -56,7 +59,10 @@ def training(dataloader, model, criterion, optimizer, config, is_training=True):
                 loss_grapheme = criterion(outputs[0], target[:, 0])
                 loss_vowel = criterion(outputs[1], target[:, 1])
                 loss_consonant = criterion(outputs[2], target[:, 2])
-                loss = loss_grapheme + loss_vowel + loss_consonant
+                loss = 0.
+                loss += cfg.training.coef_list[0] * loss_grapheme
+                loss += cfg.training.coef_list[1] * loss_vowel
+                loss += cfg.training.coef_list[2] * loss_consonant
             losses.update(loss.item(), bs)
 
             if is_training:
