@@ -24,10 +24,10 @@ class MyDataset(Dataset):
 
         # transform
         transform_list = []
-        transform_list.append(alb.Resize(height=self.input_h, width=self.input_w))
-        if self.is_training and len(config.data.augmentation) > 0:
-            aug_list = eval(config.data.augmentation[0])
-            transform_list.extend(aug_list)
+        if self.is_training:
+            transform_list.extend(eval(config.data.train_transform))
+        else:
+            transform_list.extend(eval(config.data.valid_transform))
         transform_list.append(ToTensor())
         self.transform = alb.Compose(transform_list)
 
