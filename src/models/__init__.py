@@ -27,8 +27,8 @@ def get_model(cfg):
         from torch import nn
         block_expansion = 4
         model = se_resnext50_32x4d_1(
-            num_classes=1000,
-            pretrained=cfg.model.pretrained_type,
+            num_classes=1000, pretrained=cfg.model.pretrained_type,
+            strides=cfg.model.strides, adaptive_pool=cfg.model.adaptive_pool,
         )
         model.last_linear = nn.Linear(512 * block_expansion, cfg.model.n_outputs)
     else:

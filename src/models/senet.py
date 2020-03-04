@@ -208,7 +208,8 @@ class SENet(nn.Module):
 
     def __init__(self, block, layers, groups, reduction, dropout_p=0.2,
                  inplanes=128, input_3x3=True, downsample_kernel_size=3,
-                 downsample_padding=1, num_classes=1000):
+                 downsample_padding=1, num_classes=1000,
+                 strides=[2, ]*5, adaptive_pool=False):
         """
         Parameters
         ----------
@@ -256,7 +257,7 @@ class SENet(nn.Module):
         self.inplanes = inplanes
         if input_3x3:
             layer0_modules = [
-                ('conv1', nn.Conv2d(3, 64, 3, stride=2, padding=1,
+                ('conv1', nn.Conv2d(3, 64, 3, stride=strides[0], padding=1,
                                     bias=False)),
                 ('bn1', nn.BatchNorm2d(64)),
                 ('relu1', nn.ReLU(inplace=True)),
@@ -271,14 +272,14 @@ class SENet(nn.Module):
             ]
         else:
             layer0_modules = [
-                ('conv1', nn.Conv2d(3, inplanes, kernel_size=7, stride=2,
+                ('conv1', nn.Conv2d(3, inplanes, kernel_size=7, stride=strides[0],
                                     padding=3, bias=False)),
                 ('bn1', nn.BatchNorm2d(inplanes)),
                 ('relu1', nn.ReLU(inplace=True)),
             ]
         # To preserve compatibility with Caffe weights `ceil_mode=True`
         # is used instead of `padding=1`.
-        layer0_modules.append(('pool', nn.MaxPool2d(3, stride=2,
+        layer0_modules.append(('pool', nn.MaxPool2d(3, stride=strides[1],
                                                     ceil_mode=True)))
         self.layer0 = nn.Sequential(OrderedDict(layer0_modules))
         self.layer1 = self._make_layer(
@@ -294,7 +295,7 @@ class SENet(nn.Module):
             block,
             planes=128,
             blocks=layers[1],
-            stride=1,
+            stride=strides[2],
             groups=groups,
             reduction=reduction,
             downsample_kernel_size=downsample_kernel_size,
@@ -304,7 +305,7 @@ class SENet(nn.Module):
             block,
             planes=256,
             blocks=layers[2],
-            stride=1,
+            stride=strides[3],
             groups=groups,
             reduction=reduction,
             downsample_kernel_size=downsample_kernel_size,
@@ -314,14 +315,16 @@ class SENet(nn.Module):
             block,
             planes=512,
             blocks=layers[3],
-            stride=1,
+            stride=strides[4],
             groups=groups,
             reduction=reduction,
             downsample_kernel_size=downsample_kernel_size,
             downsample_padding=downsample_padding
         )
-        # self.avg_pool = nn.AvgPool2d(7, stride=1)
-        self.avg_pool = nn.AdaptiveAvgPool2d(output_size=1)
+        if adaptive_pool:
+            self.avg_pool = nn.AdaptiveAvgPool2d(output_size=1)
+        else:
+            self.avg_pool = nn.AvgPool2d(7, stride=1)
         self.dropout = nn.Dropout(dropout_p) if dropout_p is not None else None
         self.last_linear = nn.Linear(512 * block.expansion, num_classes)
 
@@ -421,11 +424,15 @@ def se_resnet152(num_classes=1000, pretrained='imagenet'):
     return model
 
 
-def se_resnext50_32x4d_1(num_classes=1000, pretrained='imagenet'):
+def se_resnext50_32x4d_1(
+    num_classes=1000, pretrained='imagenet', strides=[2, ]*5, adaptive_pool=False
+):
     model = SENet(SEResNeXtBottleneck, [3, 4, 6, 3], groups=32, reduction=16,
                   dropout_p=None, inplanes=64, input_3x3=False,
                   downsample_kernel_size=1, downsample_padding=0,
-                  num_classes=num_classes)
+                  num_classes=num_classes,
+                  strides=strides, adaptive_pool=adaptive_pool,
+                  )
     if pretrained is not None:
         settings = pretrained_settings['se_resnext50_32x4d'][pretrained]
         initialize_pretrained_model(model, num_classes, settings)
