@@ -10,7 +10,7 @@ import torch.nn as nn
 from torch.utils import model_zoo
 
 __all__ = ['SENet', 'senet154', 'se_resnet50', 'se_resnet101', 'se_resnet152',
-           'se_resnext50_32x4d', 'se_resnext101_32x4d']
+           'se_resnext50_32x4d_1', 'se_resnext101_32x4d']
 
 pretrained_settings = {
     'senet154': {
@@ -294,7 +294,7 @@ class SENet(nn.Module):
             block,
             planes=128,
             blocks=layers[1],
-            stride=2,
+            stride=1,
             groups=groups,
             reduction=reduction,
             downsample_kernel_size=downsample_kernel_size,
@@ -304,7 +304,7 @@ class SENet(nn.Module):
             block,
             planes=256,
             blocks=layers[2],
-            stride=2,
+            stride=1,
             groups=groups,
             reduction=reduction,
             downsample_kernel_size=downsample_kernel_size,
@@ -314,13 +314,14 @@ class SENet(nn.Module):
             block,
             planes=512,
             blocks=layers[3],
-            stride=2,
+            stride=1,
             groups=groups,
             reduction=reduction,
             downsample_kernel_size=downsample_kernel_size,
             downsample_padding=downsample_padding
         )
-        self.avg_pool = nn.AvgPool2d(7, stride=1)
+        # self.avg_pool = nn.AvgPool2d(7, stride=1)
+        self.avg_pool = nn.AdaptiveAvgPool2d(output_size=1)
         self.dropout = nn.Dropout(dropout_p) if dropout_p is not None else None
         self.last_linear = nn.Linear(512 * block.expansion, num_classes)
 
@@ -420,7 +421,7 @@ def se_resnet152(num_classes=1000, pretrained='imagenet'):
     return model
 
 
-def se_resnext50_32x4d(num_classes=1000, pretrained='imagenet'):
+def se_resnext50_32x4d_1(num_classes=1000, pretrained='imagenet'):
     model = SENet(SEResNeXtBottleneck, [3, 4, 6, 3], groups=32, reduction=16,
                   dropout_p=None, inplanes=64, input_3x3=False,
                   downsample_kernel_size=1, downsample_padding=0,
