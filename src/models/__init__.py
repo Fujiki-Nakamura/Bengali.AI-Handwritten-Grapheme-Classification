@@ -28,6 +28,7 @@ def get_model(cfg):
         block_expansion = 4
         model = se_resnext50_32x4d_1(
             num_classes=1000, pretrained=cfg.model.pretrained_type,
+            dropout_p=cfg.model.dropout_p,
             strides=cfg.model.strides, adaptive_pool=cfg.model.adaptive_pool,
         )
         model.last_linear = nn.Linear(512 * block_expansion, cfg.model.n_outputs)
