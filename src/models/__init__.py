@@ -1,6 +1,7 @@
 from torchvision import models
 import pretrainedmodels
-from .senet import se_resnext50_32x4d_1
+from .senet import se_resnext50_32x4d_1  # noqa
+from .senet_dropblock import se_resnext50_32x4d_dropblock_1  # noqa
 from .resnet import *
 from .vgg import *
 
@@ -11,6 +12,7 @@ pretrainedmodels_model_name_list = [
 ]
 senet_model_name_list = [
     'se_resnext50_32x4d_1',
+    'se_resnext50_32x4d_dropblock_1',
 ]
 
 
@@ -26,7 +28,7 @@ def get_model(cfg):
     elif cfg.model.name in senet_model_name_list:
         from torch import nn
         block_expansion = 4
-        model = se_resnext50_32x4d_1(
+        model = eval(cfg.model.name)(
             num_classes=1000, pretrained=cfg.model.pretrained_type,
             dropout_p=cfg.model.dropout_p,
             strides=cfg.model.strides, adaptive_pool=cfg.model.adaptive_pool,
