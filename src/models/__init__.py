@@ -2,6 +2,7 @@ from torchvision import models
 import pretrainedmodels
 from .senet import se_resnext50_32x4d_1  # noqa
 from .senet_dropblock import se_resnext50_32x4d_dropblock_1  # noqa
+from .senet_dropblock_2 import se_resnext50_32x4d_dropblock_2  # noqa
 from .resnet import *
 from .vgg import *
 
@@ -13,6 +14,7 @@ pretrainedmodels_model_name_list = [
 senet_model_name_list = [
     'se_resnext50_32x4d_1',
     'se_resnext50_32x4d_dropblock_1',
+    'se_resnext50_32x4d_dropblock_2',
 ]
 
 
