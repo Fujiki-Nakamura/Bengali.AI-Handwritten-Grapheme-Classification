@@ -109,6 +109,7 @@ class Bottleneck(nn.Module):
     """
     Base class for bottlenecks that implements `forward()` method.
     """
+
     def forward(self, x):
         residual = x
 
@@ -322,8 +323,8 @@ class SENet(nn.Module):
             downsample_kernel_size=downsample_kernel_size,
             downsample_padding=downsample_padding
         )
-        self.dropblock0 = DropBlock2D(drop_prob=0.2, block_size=16)
-        self.dropblock1 = DropBlock2D(drop_prob=0.2, block_size=8)
+        self.dropblock3 = DropBlock2D(drop_prob=0.2, block_size=4)
+        self.dropblock4 = DropBlock2D(drop_prob=0.2, block_size=4)
         if adaptive_pool:
             self.avg_pool = nn.AdaptiveAvgPool2d(output_size=1)
         else:
@@ -353,12 +354,12 @@ class SENet(nn.Module):
 
     def features(self, x):
         x = self.layer0(x)
-        x = self.dropblock0(x)
         x = self.layer1(x)
-        x = self.dropblock1(x)
         x = self.layer2(x)
         x = self.layer3(x)
+        x = self.dropblock3(x)
         x = self.layer4(x)
+        x = self.dropblock4(x)
         return x
 
     def logits(self, x):
