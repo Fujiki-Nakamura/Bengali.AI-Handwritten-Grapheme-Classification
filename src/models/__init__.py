@@ -36,6 +36,8 @@ def get_model(cfg):
             num_classes=1000, pretrained=cfg.model.pretrained_type,
             dropout_p=cfg.model.dropout_p,
             strides=cfg.model.strides, adaptive_pool=cfg.model.adaptive_pool,
+            input_c=cfg.model.get('input_c', 3),
+            input_3x3=cfg.model.get('input_3x3', False),
         )
         model.last_linear = nn.Linear(512 * block_expansion, cfg.model.n_outputs)
     else:

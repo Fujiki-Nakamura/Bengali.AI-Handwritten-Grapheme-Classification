@@ -210,7 +210,7 @@ class SENet(nn.Module):
     def __init__(self, block, layers, groups, reduction, dropout_p=0.2,
                  inplanes=128, input_3x3=True, downsample_kernel_size=3,
                  downsample_padding=1, num_classes=1000,
-                 strides=[2, ]*5, adaptive_pool=False):
+                 strides=[2, ]*5, adaptive_pool=False, input_c=3,):
         """
         Parameters
         ----------
@@ -258,7 +258,7 @@ class SENet(nn.Module):
         self.inplanes = inplanes
         if input_3x3:
             layer0_modules = [
-                ('conv1', nn.Conv2d(3, 64, 3, stride=strides[0], padding=1,
+                ('conv1', nn.Conv2d(input_c, 64, 3, stride=strides[0], padding=1,
                                     bias=False)),
                 ('bn1', nn.BatchNorm2d(64)),
                 ('relu1', nn.ReLU(inplace=True)),
@@ -273,7 +273,7 @@ class SENet(nn.Module):
             ]
         else:
             layer0_modules = [
-                ('conv1', nn.Conv2d(3, inplanes, kernel_size=7, stride=strides[0],
+                ('conv1', nn.Conv2d(input_c, inplanes, kernel_size=7, stride=strides[0],
                                     padding=3, bias=False)),
                 ('bn1', nn.BatchNorm2d(inplanes)),
                 ('relu1', nn.ReLU(inplace=True)),
@@ -431,13 +431,14 @@ def se_resnet152(num_classes=1000, pretrained='imagenet'):
 
 def se_resnext50_32x4d_dropblock_1(
     num_classes=1000, pretrained='imagenet', dropout_p=None,
-    strides=[2, ]*5, adaptive_pool=False
+    strides=[2, ]*5, adaptive_pool=False, input_c=3, input_3x3=False
 ):
     model = SENet(SEResNeXtBottleneck, [3, 4, 6, 3], groups=32, reduction=16,
-                  dropout_p=dropout_p, inplanes=64, input_3x3=False,
+                  dropout_p=dropout_p, inplanes=64, input_3x3=input_3x3,
                   downsample_kernel_size=1, downsample_padding=0,
                   num_classes=num_classes,
                   strides=strides, adaptive_pool=adaptive_pool,
+                  input_c=input_c,
                   )
     if pretrained is not None:
         settings = pretrained_settings['se_resnext50_32x4d'][pretrained]
