@@ -111,7 +111,7 @@ class EfficientNet(nn.Module):
 
     """
 
-    def __init__(self, blocks_args=None, global_params=None):
+    def __init__(self, blocks_args=None, global_params=None, input_c=3, n_outputs=1000):
         super().__init__()
         assert isinstance(blocks_args, list), 'blocks_args should be a list'
         assert len(blocks_args) > 0, 'block args must be greater than 0'
@@ -126,7 +126,7 @@ class EfficientNet(nn.Module):
         bn_eps = self._global_params.batch_norm_epsilon
 
         # Stem
-        in_channels = 3  # rgb
+        in_channels = input_c  # rgb
         out_channels = round_filters(32, self._global_params)  # number of output channels
         self._conv_stem = Conv2d(in_channels, out_channels, kernel_size=3, stride=2, bias=False)
         self._bn0 = nn.BatchNorm2d(num_features=out_channels, momentum=bn_mom, eps=bn_eps)
@@ -158,7 +158,7 @@ class EfficientNet(nn.Module):
         # Final linear layer
         self._avg_pooling = nn.AdaptiveAvgPool2d(1)
         self._dropout = nn.Dropout(self._global_params.dropout_rate)
-        self._fc = nn.Linear(out_channels, self._global_params.num_classes)
+        self._fc = nn.Linear(out_channels, n_outputs)
         self._swish = MemoryEfficientSwish()
 
     def set_swish(self, memory_efficient=True):
@@ -200,10 +200,13 @@ class EfficientNet(nn.Module):
         return x
 
     @classmethod
-    def from_name(cls, model_name, override_params=None):
+    def from_name(
+        cls, model_name, override_params=None, input_c=3, n_outputs=None,
+    ):
         cls._check_model_name_is_valid(model_name)
         blocks_args, global_params = get_model_params(model_name, override_params)
-        return cls(blocks_args, global_params)
+        n_outputs = global_params.num_classes if n_outputs is None else n_outputs
+        return cls(blocks_args, global_params, input_c=input_c, n_outputs=n_outputs)
 
     @classmethod
     def from_pretrained(cls, model_name, advprop=False, num_classes=1000, in_channels=3):
