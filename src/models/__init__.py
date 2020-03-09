@@ -6,6 +6,7 @@ from .senet_dropblock_2 import se_resnext50_32x4d_dropblock_2  # noqa
 from .senet_dropblock_3 import se_resnext50_32x4d_dropblock_3  # noqa
 from .resnet import *
 from .vgg import *
+from .efficientnet_pytorch import EfficientNet
 
 
 pretrainedmodels_model_name_list = [
@@ -21,7 +22,11 @@ senet_model_name_list = [
 
 
 def get_model(cfg):
-    if cfg.model.name in pretrainedmodels_model_name_list:
+    if cfg.model.name.startswith('efficientnet'):
+        model = EfficientNet.from_name(
+            model_name=cfg.model.name,
+            input_c=cfg.model.input_c, n_outputs=cfg.model.n_outputs)
+    elif cfg.model.name in pretrainedmodels_model_name_list:
         from torch import nn
         block_expansion = 4
         model = pretrainedmodels.__dict__[cfg.model.name](
