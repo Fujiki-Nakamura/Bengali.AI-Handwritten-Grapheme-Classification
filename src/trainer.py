@@ -38,8 +38,9 @@ def training(dataloader, model, criterion, optimizer, config, is_training=True):
                 loss = 0.
                 for i in range(len(component_list)):
                     coef = cfg.training.coef_list[i]
-                    loss += coef * criterion(outputs[i], target_a[:, i]) * lam + criterion(
-                            outputs[i], target_b[:, i]) * (1. - lam)
+                    loss += coef * (
+                        criterion(outputs[i], target_a[:, i]) * lam +
+                        criterion(outputs[i], target_b[:, i]) * (1. - lam))
             elif is_training and config.mixup.beta > 0 and r < config.mixup.prob:
                 lam = np.random.beta(config.mixup.beta, config.mixup.beta)
                 rand_index = torch.randperm(data.size()[0]).cuda()
@@ -51,8 +52,9 @@ def training(dataloader, model, criterion, optimizer, config, is_training=True):
                 loss = 0.
                 for i in range(len(component_list)):
                     coef = cfg.training.coef_list[i]
-                    loss += coef * criterion(outputs[i], target_a[:, i]) * lam + criterion(
-                            outputs[i], target_b[:, i]) * (1. - lam)
+                    loss += coef * (
+                            criterion(outputs[i], target_a[:, i]) * lam +
+                            criterion(outputs[i], target_b[:, i]) * (1. - lam))
             else:
                 output = model(data)
                 outputs = torch.split(output, [N_GRAPHEME, N_VOWEL, N_CONSONANT], dim=1)
