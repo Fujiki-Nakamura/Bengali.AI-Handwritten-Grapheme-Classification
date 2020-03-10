@@ -138,8 +138,8 @@ def main(args):
                 'score/best': best['score'],
             }
             utils.save_checkpoint(
-                state_dict, is_best, Path(cfg.general.logdir)/f'fold_{fold_i}',
-                epoch=epoch_i, loss=valid['loss'], score=valid['score'])
+                state_dict, is_best, epoch_i, valid['loss'], valid['score'],
+                Path(cfg.general.logdir)/f'fold_{fold_i}',)
 
             log = f'[{expid}] Fold {fold_i+1} Epoch {epoch_i}/{cfg.training.epochs} '
             log += f'[loss] {train["loss"]:.4f}/{valid["loss"]:.4f} '
