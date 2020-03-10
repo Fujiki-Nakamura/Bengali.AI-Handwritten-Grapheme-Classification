@@ -103,7 +103,11 @@ def main(args):
         for epoch_i in range(start_epoch, cfg.training.epochs + 1):
             for param_group in optimizer.param_groups:
                 current_lr = param_group['lr']
-            train = training(train_loader, model, criterion, optimizer, config=cfg)
+            _ohem_loss = (cfg.training.ohem_loss and cfg.training.ohem_epoch < epoch_i)
+            train = training(
+                train_loader, model, criterion, optimizer, config=cfg,
+                using_ohem_loss=_ohem_loss,
+            )
             valid = training(
                 valid_loader, model, criterion, optimizer, is_training=False, config=cfg)
             if scheduler is not None:

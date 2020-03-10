@@ -4,10 +4,14 @@ import torch
 from torch.nn import functional as F
 
 from common import component_list, N_GRAPHEME, N_VOWEL, N_CONSONANT
+from loss import ohem_loss
 import utils
 
 
-def training(dataloader, model, criterion, optimizer, config, is_training=True):
+def training(
+    dataloader, model, criterion, optimizer, config, is_training=True,
+    using_ohem_loss=False,
+):
     cfg = config
     device = config.general.device
     if is_training:
@@ -38,9 +42,15 @@ def training(dataloader, model, criterion, optimizer, config, is_training=True):
                 loss = 0.
                 for i in range(len(component_list)):
                     coef = cfg.training.coef_list[i]
-                    loss += coef * (
-                        criterion(outputs[i], target_a[:, i]) * lam +
-                        criterion(outputs[i], target_b[:, i]) * (1. - lam))
+                    if using_ohem_loss:
+                        _rate = cfg.training.ohem_rate
+                        loss += coef * (
+                            ohem_loss(_rate, outputs[i], target_a[:, i]) * lam +
+                            ohem_loss(_rate, outputs[i], target_b[:, i]) * (1. - lam))
+                    else:
+                        loss += coef * (
+                            criterion(outputs[i], target_a[:, i]) * lam +
+                            criterion(outputs[i], target_b[:, i]) * (1. - lam))
             elif is_training and config.mixup.beta > 0 and r < config.mixup.prob:
                 lam = np.random.beta(config.mixup.beta, config.mixup.beta)
                 rand_index = torch.randperm(data.size()[0]).cuda()
@@ -58,13 +68,21 @@ def training(dataloader, model, criterion, optimizer, config, is_training=True):
             else:
                 output = model(data)
                 outputs = torch.split(output, [N_GRAPHEME, N_VOWEL, N_CONSONANT], dim=1)
-                loss_grapheme = criterion(outputs[0], target[:, 0])
-                loss_vowel = criterion(outputs[1], target[:, 1])
-                loss_consonant = criterion(outputs[2], target[:, 2])
                 loss = 0.
-                loss += cfg.training.coef_list[0] * loss_grapheme
-                loss += cfg.training.coef_list[1] * loss_vowel
-                loss += cfg.training.coef_list[2] * loss_consonant
+                if using_ohem_loss:
+                    _rate = cfg.training.ohem_rate
+                    for i in range(len(component_list)):
+                        coef = cfg.training.coef_list[i]
+                        loss += coef * ohem_loss(_rate, outputs[i], target[:, i])
+                else:
+                    # TODO: refactor
+                    loss_grapheme = criterion(outputs[0], target[:, 0])
+                    loss_vowel = criterion(outputs[1], target[:, 1])
+                    loss_consonant = criterion(outputs[2], target[:, 2])
+                    loss = 0.
+                    loss += cfg.training.coef_list[0] * loss_grapheme
+                    loss += cfg.training.coef_list[1] * loss_vowel
+                    loss += cfg.training.coef_list[2] * loss_consonant
             losses.update(loss.item(), bs)
 
             if is_training:
