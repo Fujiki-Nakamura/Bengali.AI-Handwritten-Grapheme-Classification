@@ -37,6 +37,7 @@ class MyDataset(Dataset):
     def __getitem__(self, idx):
         # input
         input_ = self.data[idx]
+        input_ = input_ * (255.0 / input_.max()).astype(np.uint8)
         input_ = np.repeat(input_, self.input_c, 2)
         if self.transform is not None:
             input_ = self.transform(image=input_)['image']
