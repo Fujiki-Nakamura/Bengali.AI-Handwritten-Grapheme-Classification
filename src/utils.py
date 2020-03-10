@@ -31,15 +31,19 @@ def parse_arg_str(arg_str):
     return arg_dict
 
 
-def save_checkpoint(state, is_best, logdir, filename='checkpoint.pt'):
+def save_checkpoint(
+    state, is_best, epoch, loss, score, logdir, filename='checkpoint.pt'
+):
     if not os.path.exists(logdir):
         os.makedirs(logdir)
     path = os.path.join(logdir, filename)
     torch.save(state, path)
     if is_best['loss']:
-        shutil.copyfile(path, os.path.join(logdir, 'bestLoss.pt'))
+        fname = f'bestLoss-{loss:.4f}-{score:.4f}.pt'
+        shutil.copyfile(path, os.path.join(logdir, fname))
     if is_best['score']:
-        shutil.copyfile(path, os.path.join(logdir, 'bestScore.pt'))
+        fname = f'bestScore-{loss:.4f}-{score:.4f}.pt'
+        shutil.copyfile(path, os.path.join(logdir, fname))
 
 
 def get_logger(log_file):
