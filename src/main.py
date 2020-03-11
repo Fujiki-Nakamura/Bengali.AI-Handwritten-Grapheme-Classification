@@ -37,6 +37,7 @@ def main(args):
     # log
     if cfg.general.expid == '':
         expid = dt.datetime.now().strftime('%Y%m%d%H%M%S')
+        cfg.general.expid = expid
     else:
         expid = cfg.general.expid
     cfg.general.logdir = str(LOGDIR/expid)

@@ -22,7 +22,8 @@ def training(
     losses = utils.AverageMeter()
     pred = {'grapheme': [], 'vowel': [], 'consonant': []}
     true = {'grapheme': [], 'vowel': [], 'consonant': []}
-    pbar = tqdm(total=len(dataloader), desc='train' if is_training else 'valid', position=0)
+    _desc = f'[{config.general.expid}] train' if is_training else 'valid'
+    pbar = tqdm(total=len(dataloader), desc=_desc, position=0)
     for data, target in dataloader:
         data = data.to(device)
         target = target.to(device)
