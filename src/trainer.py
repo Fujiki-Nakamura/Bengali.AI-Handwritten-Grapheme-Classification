@@ -2,6 +2,7 @@ import numpy as np
 from sklearn.metrics import recall_score
 import torch
 from torch.nn import functional as F
+from tqdm import tqdm
 
 from common import component_list, N_GRAPHEME, N_VOWEL, N_CONSONANT
 from loss import ohem_loss
@@ -21,6 +22,7 @@ def training(
     losses = utils.AverageMeter()
     pred = {'grapheme': [], 'vowel': [], 'consonant': []}
     true = {'grapheme': [], 'vowel': [], 'consonant': []}
+    pbar = tqdm(total=len(dataloader), desc='train' if is_training else 'valid', position=0)
     for data, target in dataloader:
         data = data.to(device)
         target = target.to(device)
@@ -95,7 +97,9 @@ def training(
                     F.softmax(outputs[component_i], dim=1).max(1)[1].detach().cpu().numpy().tolist())  # noqa
                 true[component].extend(target[:, component_i].cpu().numpy().tolist())
 
+        pbar.update(1)
         if config.training.single_iter: break  # noqa
+    pbar.close()
 
     scores = []
     for component in ['grapheme', 'consonant', 'vowel']:
