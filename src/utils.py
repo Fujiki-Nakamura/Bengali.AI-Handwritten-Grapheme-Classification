@@ -39,10 +39,10 @@ def save_checkpoint(
     path = os.path.join(logdir, filename)
     torch.save(state, path)
     if is_best['loss']:
-        fname = f'bestLoss-{loss:.4f}-{score:.4f}.pt'
+        fname = f'bestLoss.epoch-{epoch:03}.loss-{loss:.4f}.met-{score:.4f}.pt'
         shutil.copyfile(path, os.path.join(logdir, fname))
     if is_best['score']:
-        fname = f'bestScore-{loss:.4f}-{score:.4f}.pt'
+        fname = f'bestScore.epoch-{epoch:03}.loss-{loss:.4f}.met-{score:.4f}.pt'
         shutil.copyfile(path, os.path.join(logdir, fname))
 
 
