@@ -1,3 +1,4 @@
+import argparse
 from pathlib import Path
 import sys
 from torch.utils.tensorboard import SummaryWriter
@@ -31,6 +32,7 @@ def main(log_d):
 
 
 if __name__ == '__main__':
-    log_rootd = Path('../logs/')
-    log_d = log_rootd/'20200216040313/fold_0/'
-    main(log_d)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--logdir', type=str)
+    args, unknown_args = parser.parse_known_args()
+    main(Path(args.logdir))
