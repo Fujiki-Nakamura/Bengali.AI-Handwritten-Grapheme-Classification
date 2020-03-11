@@ -11,6 +11,7 @@ import numpy as np
 from sklearn import model_selection
 import torch
 from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
 
 from common import LOGDIR
 from dataset import MyDataset as Dataset
@@ -46,6 +47,8 @@ def main(args):
     logger.info(f'Logging at {cfg.general.logdir}')
     logger.info(cfg)
     shutil.copyfile(str(args.config), cfg.general.logdir+'/config.yaml')
+    writer = SummaryWriter(cfg.general.logdir)
+
     # data
     X_train = np.load(cfg.data.X_train, allow_pickle=True)
     y_train = np.load(cfg.data.y_train, allow_pickle=True)
@@ -110,6 +113,12 @@ def main(args):
             )
             valid = training(
                 valid_loader, model, criterion, optimizer, is_training=False, config=cfg)
+
+            writer.add_scalar('Loss/Train', train['loss'], epoch_i)
+            writer.add_scalar('Loss/Valid', valid['loss'], epoch_i)
+            writer.add_scalar('Metrics/Train', train['score'], epoch_i)
+            writer.add_scalar('Metrics/Valid', valid['score'], epoch_i)
+
             if scheduler is not None:
                 if cfg.training.lr_scheduler.name == 'ReduceLROnPlateau':
                     if scheduler.mode == 'min':
