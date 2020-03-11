@@ -216,6 +216,9 @@ class EfficientNet(nn.Module):
             Conv2d = get_same_padding_conv2d(image_size = model._global_params.image_size)
             out_channels = round_filters(32, model._global_params)
             model._conv_stem = Conv2d(in_channels, out_channels, kernel_size=3, stride=2, bias=False)
+        out_channels = round_filters(1280, model._global_params)
+        model._fc = nn.Linear(out_channels, num_classes)
+
         return model
     
     @classmethod
