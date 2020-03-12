@@ -105,6 +105,9 @@ def main(args):
                 raise IOError('No such file {}'.format(cfg.model.resume))
 
         for epoch_i in range(start_epoch, cfg.training.epochs + 1):
+            if scheduler is not None:
+                if cfg.training.lr_scheduler.name == 'MultiStepLR':
+                    scheduler.step()
             for param_group in optimizer.param_groups:
                 current_lr = param_group['lr']
             _ohem_loss = (cfg.training.ohem_loss and cfg.training.ohem_epoch < epoch_i)
@@ -129,8 +132,6 @@ def main(args):
                     else:
                         raise NotImplementedError
                     scheduler.step(value)
-                else:
-                    scheduler.step()
 
             is_best['loss'] = valid['loss'] < best['loss']
             is_best['score'] = valid['score'] > best['score']
