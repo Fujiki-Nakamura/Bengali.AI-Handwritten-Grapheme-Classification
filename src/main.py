@@ -113,10 +113,11 @@ def main(args):
             _ohem_loss = (cfg.training.ohem_loss and cfg.training.ohem_epoch < epoch_i)
             train = training(
                 train_loader, model, criterion, optimizer, config=cfg,
-                using_ohem_loss=_ohem_loss,
+                using_ohem_loss=_ohem_loss, lr=current_lr
             )
             valid = training(
-                valid_loader, model, criterion, optimizer, is_training=False, config=cfg)
+                valid_loader, model, criterion, optimizer, is_training=False, config=cfg,
+                lr=current_lr)
 
             writer.add_scalar('Loss/Train', train['loss'], epoch_i)
             writer.add_scalar('Loss/Valid', valid['loss'], epoch_i)
