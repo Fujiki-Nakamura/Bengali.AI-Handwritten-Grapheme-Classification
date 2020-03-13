@@ -107,6 +107,8 @@ def main(args):
         for epoch_i in range(start_epoch, cfg.training.epochs + 1):
             if scheduler is not None:
                 if cfg.training.lr_scheduler.name == 'MultiStepLR':
+                    optimizer.zero_grad()
+                    optimizer.step()
                     scheduler.step()
             for param_group in optimizer.param_groups:
                 current_lr = param_group['lr']
