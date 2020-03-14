@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import numpy as np
 from sklearn.metrics import recall_score
 import torch
@@ -33,9 +34,12 @@ def training(
         with torch.set_grad_enabled(is_training):
             bs = target.size(0)
 
+            aug_type = 'None  '
             # CutMix
             r = np.random.rand(1)
+            r_mixup = np.random.rand(1)
             if is_training and config.cutmix.beta > 0 and r < config.cutmix.prob:
+                aug_type = 'CutMix'
                 lam = np.random.beta(config.cutmix.beta, config.cutmix.beta)
                 rand_index = torch.randperm(data.size()[0]).cuda()
                 target_a = target
@@ -57,7 +61,8 @@ def training(
                         loss += coef * (
                             criterion(outputs[i], target_a[:, i]) * lam +
                             criterion(outputs[i], target_b[:, i]) * (1. - lam))
-            elif is_training and config.mixup.beta > 0 and r < config.mixup.prob:
+            elif is_training and config.mixup.beta > 0 and r_mixup < config.mixup.prob:
+                aug_type = 'Mixup'
                 lam = np.random.beta(config.mixup.beta, config.mixup.beta)
                 rand_index = torch.randperm(data.size()[0]).cuda()
                 target_a = target
@@ -101,6 +106,7 @@ def training(
                     F.softmax(outputs[component_i], dim=1).max(1)[1].detach().cpu().numpy().tolist())  # noqa
                 true[component].extend(target[:, component_i].cpu().numpy().tolist())
 
+        pbar.set_postfix(OrderedDict(aug=aug_type))
         pbar.update(1)
         if config.training.single_iter: break  # noqa
     pbar.close()
