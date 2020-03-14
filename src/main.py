@@ -129,7 +129,7 @@ def main(args):
                 valid_loader, model, criterion, optimizer, is_training=False, config=cfg,
                 lr=current_lr)
 
-            if scheduler is not None and lr_scheduler.name != 'MultiStepLR':
+            if scheduler is not None and cfg.training.lr_scheduler.name != 'MultiStepLR':
                 if cfg.training.lr_scheduler.name == 'ReduceLROnPlateau':
                     if scheduler.mode == 'min':
                         value = valid['loss']
