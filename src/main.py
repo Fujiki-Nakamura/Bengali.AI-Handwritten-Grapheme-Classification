@@ -105,7 +105,8 @@ def main(args):
                 best['loss'] = checkpoint['loss/best']
                 best['score'] = checkpoint['score/best']
                 model.load_state_dict(checkpoint['state_dict'])
-                optimizer.load_state_dict(checkpoint['optimizer'])
+                if cfg.model.get('load_optimizer', True):
+                    optimizer.load_state_dict(checkpoint['optimizer'])
                 logger.info('Loaded checkpoint {} (epoch {})'.format(
                     cfg.model.resume, start_epoch - 1))
             else:
