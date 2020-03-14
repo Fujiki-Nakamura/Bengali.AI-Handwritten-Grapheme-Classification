@@ -138,6 +138,8 @@ def main(args):
                     else:
                         raise NotImplementedError
                     scheduler.step(value)
+                else:
+                    scheduler.step()
 
             is_best['loss'] = valid['loss'] < best['loss']
             is_best['score'] = valid['score'] > best['score']
