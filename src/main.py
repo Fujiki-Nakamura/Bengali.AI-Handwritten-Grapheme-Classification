@@ -67,11 +67,16 @@ def main(args):
         y_train_ = y_train[train_idx]
         X_valid_ = X_train[valid_idx]
         y_valid_ = y_train[valid_idx]
-        if cfg.training.get('with_90_percent_fold_1_of_5', False):
-            assert cfg.training.n_splits == 5
+        _ratio = cfg.training.get('with_x_percent_fold_1_of_5', 0.)
+        if _ratio > 0.:
+            assert cfg.training.n_splits == 5 and fold_i + 1 == 1
             from sklearn.model_selection import train_test_split
+            if _ratio == 0.95:
+                _test_size = 0.25
+            else:
+                raise NotImplementedError
             _X_train, X_valid_, _y_train, y_valid_ = train_test_split(
-                X_valid_, y_valid_, test_size=0.5, random_state=cfg.general.random_state)
+                X_valid_, y_valid_, test_size=_test_size, random_state=cfg.general.random_state)
             X_train_ = np.concatenate([X_train_, _X_train], axis=0)
             y_train_ = np.concatenate([y_train_, _y_train], axis=0)
         train_set = Dataset(X_train_, y_train_, cfg, mode='train')
