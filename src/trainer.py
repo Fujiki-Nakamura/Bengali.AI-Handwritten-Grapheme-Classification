@@ -24,7 +24,8 @@ def training(
     pred = {'grapheme': [], 'vowel': [], 'consonant': []}
     true = {'grapheme': [], 'vowel': [], 'consonant': []}
     mode = 'train' if is_training else 'valid'
-    _desc = f'[{config.general.expid}] {mode}'
+    dataset_size = len(dataloader.dataset)
+    _desc = f'[{config.general.expid}] {mode} {dataset_size}'
     _desc = _desc + f' lr {lr:.4f}' if lr is not None else _desc
     _desc = _desc + f' OHEMLoss' if using_ohem_loss else _desc
     pbar = tqdm(total=len(dataloader), desc=_desc, position=0)
