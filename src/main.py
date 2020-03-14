@@ -67,6 +67,13 @@ def main(args):
         y_train_ = y_train[train_idx]
         X_valid_ = X_train[valid_idx]
         y_valid_ = y_train[valid_idx]
+        if cfg.training.val90:
+            assert cfg.training.n_splits == 5
+            from sklearn.model_selection import train_test_split
+            _X_train, X_valid_, _y_train, y_valid_ = train_test_split(
+                X_valid_, y_valid_, test_size=0.5, random_state=cfg.general.random_state)
+            X_train_ = np.concatenate([X_train_, _X_train], axis=0)
+            y_train_ = np.concatenate([y_train_, _y_train], axis=0)
         train_set = Dataset(X_train_, y_train_, cfg, mode='train')
         valid_set = Dataset(X_valid_, y_valid_, cfg, mode='valid')
         if fold_i == 0:
