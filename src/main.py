@@ -121,11 +121,6 @@ def main(args):
                 valid_loader, model, criterion, optimizer, is_training=False, config=cfg,
                 lr=current_lr)
 
-            writer.add_scalar('Loss/Train', train['loss'], epoch_i)
-            writer.add_scalar('Loss/Valid', valid['loss'], epoch_i)
-            writer.add_scalar('Metrics/Train', train['score'], epoch_i)
-            writer.add_scalar('Metrics/Valid', valid['score'], epoch_i)
-
             if scheduler is not None:
                 if cfg.training.lr_scheduler.name == 'ReduceLROnPlateau':
                     if scheduler.mode == 'min':
@@ -154,6 +149,14 @@ def main(args):
             utils.save_checkpoint(
                 state_dict, is_best, epoch_i, valid['loss'], valid['score'],
                 Path(cfg.general.logdir)/f'fold_{fold_i}',)
+
+            # tensorboard
+            writer.add_scalar('Loss/Train', train['loss'], epoch_i)
+            writer.add_scalar('Loss/Valid', valid['loss'], epoch_i)
+            writer.add_scalar('Loss/Best',  best['loss'], epoch_i)
+            writer.add_scalar('Metrics/Train', train['score'], epoch_i)
+            writer.add_scalar('Metrics/Valid', valid['score'], epoch_i)
+            writer.add_scalar('Metrics/Best', best['score'], epoch_i)
 
             log = f'[{expid}] Fold {fold_i+1} Epoch {epoch_i}/{cfg.training.epochs} '
             log += f'[loss] {train["loss"]:.4f}/{valid["loss"]:.4f} '
