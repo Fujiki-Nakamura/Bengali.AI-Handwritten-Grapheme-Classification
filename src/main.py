@@ -67,7 +67,7 @@ def main(args):
         y_train_ = y_train[train_idx]
         X_valid_ = X_train[valid_idx]
         y_valid_ = y_train[valid_idx]
-        if cfg.training.with_90_percent_fold_1_of_5:
+        if cfg.training.get('with_90_percent_fold_1_of_5', False):
             assert cfg.training.n_splits == 5
             from sklearn.model_selection import train_test_split
             _X_train, X_valid_, _y_train, y_valid_ = train_test_split(
