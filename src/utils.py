@@ -1,8 +1,19 @@
+from collections import OrderedDict
 import os
 import shutil
 import torch
 import torch.optim as optim
 from RAdam.radam import RAdam
+
+
+def fix_model_state_dict(state_dict):
+    new_state_dict = OrderedDict()
+    for k, v in state_dict.items():
+        name = k
+        if name.startswith('module.'):
+            name = name[7:]  # remove 'module.' of dataparallel
+        new_state_dict[name] = v
+    return new_state_dict
 
 
 def get_optimizer(params, config):

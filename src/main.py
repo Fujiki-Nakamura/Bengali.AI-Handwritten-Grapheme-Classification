@@ -112,7 +112,11 @@ def main(args):
                 start_epoch = checkpoint['epoch'] + 1
                 best['loss'] = checkpoint['loss/best']
                 best['score'] = checkpoint['score/best']
-                model.load_state_dict(checkpoint['state_dict'])
+                if cfg.general.multi_gpu:
+                    model.load_state_dict(utils.fix_model_state_dict(
+                        checkpoint['state_dict']))
+                else:
+                    model.load_state_dict(checkpoint['state_dict'])
                 if cfg.model.get('load_optimizer', True):
                     optimizer.load_state_dict(checkpoint['optimizer'])
                 logger.info('Loaded checkpoint {} (epoch {})'.format(
@@ -158,9 +162,10 @@ def main(args):
                 best['loss'] = valid['loss']
             if is_best['score']:
                 best['score'] = valid['score']
+            model_state_dict = model.module.state_dict() if cfg.general.multi_gpu else model.state_dict()  # noqa
             state_dict = {
                 'epoch': epoch_i,
-                'state_dict': model.state_dict(),
+                'state_dict': model_state_dict,
                 'optimizer': optimizer.state_dict(),
                 'loss/valid': valid['loss'],
                 'score/valid': valid['score'],
