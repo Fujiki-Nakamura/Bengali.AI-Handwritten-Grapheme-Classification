@@ -10,6 +10,7 @@ import yaml
 import numpy as np
 from sklearn import model_selection
 import torch
+from torch import nn
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
@@ -116,6 +117,9 @@ def main(args):
                     cfg.model.resume, start_epoch - 1))
             else:
                 raise IOError('No such file {}'.format(cfg.model.resume))
+
+        if cfg.general.multi_gpu:
+            model = nn.DataParallel(model)
 
         for epoch_i in range(start_epoch, cfg.training.epochs + 1):
             if scheduler is not None:
