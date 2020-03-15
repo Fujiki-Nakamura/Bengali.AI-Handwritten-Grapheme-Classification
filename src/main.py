@@ -74,6 +74,8 @@ def main(args):
             from sklearn.model_selection import train_test_split
             if _ratio == 0.95:
                 _test_size = 0.25
+            elif _ratio == 0.9:
+                _test_size = 0.5
             else:
                 raise NotImplementedError
             _X_train, X_valid_, _y_train, y_valid_ = train_test_split(
