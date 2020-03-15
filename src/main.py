@@ -185,9 +185,9 @@ def main(args):
             writer.add_scalar('Metrics/Best', best['score'], epoch_i)
 
             log = f'[{expid}] Fold {fold_i+1} Epoch {epoch_i}/{cfg.training.epochs} '
-            log += f'[loss] {train["loss"]:.4f}/{valid["loss"]:.4f} '
-            log += f'[score] {train["score"]:.4f}/{valid["score"]:.4f} '
-            log += f'({best["score"]:.4f}) '
+            log += f'[loss] {train["loss"]:.6f}/{valid["loss"]:.6f} '
+            log += f'[score] {train["score"]:.6f}/{valid["score"]:.6f} '
+            log += f'({best["score"]:.6f}) '
             log += f'lr {current_lr:.6f}'
             logger.info(log)
 
