@@ -1,8 +1,19 @@
+from collections import OrderedDict
 import os
 import shutil
 import torch
 import torch.optim as optim
 from RAdam.radam import RAdam
+
+
+def fix_model_state_dict(state_dict):
+    new_state_dict = OrderedDict()
+    for k, v in state_dict.items():
+        name = k
+        if name.startswith('module.'):
+            name = name[7:]  # remove 'module.' of dataparallel
+        new_state_dict[name] = v
+    return new_state_dict
 
 
 def get_optimizer(params, config):
@@ -31,15 +42,19 @@ def parse_arg_str(arg_str):
     return arg_dict
 
 
-def save_checkpoint(state, is_best, logdir, filename='checkpoint.pt'):
+def save_checkpoint(
+    state, is_best, epoch, loss, score, logdir, filename='checkpoint.pt'
+):
     if not os.path.exists(logdir):
         os.makedirs(logdir)
     path = os.path.join(logdir, filename)
     torch.save(state, path)
-    if is_best['loss']:
-        shutil.copyfile(path, os.path.join(logdir, 'bestLoss.pt'))
     if is_best['score']:
-        shutil.copyfile(path, os.path.join(logdir, 'bestScore.pt'))
+        fname = f'epoch{epoch:05}.loss{loss:.6f}.bestmet{score:.6f}.pt'
+        shutil.copyfile(path, os.path.join(logdir, fname))
+    elif is_best['loss']:
+        fname = f'epoch{epoch:05}.bestloss{loss:.6f}.met{score:.6f}.pt'
+        shutil.copyfile(path, os.path.join(logdir, fname))
 
 
 def get_logger(log_file):

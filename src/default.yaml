@@ -7,65 +7,75 @@ general:
 data:
     X_train: "../inputs/X_train.npy"
     y_train: "../inputs/y_train.npy"
-    input_h: 224
+    input_h: 128
     input_w: 224
-    # input_h: 137
-    # input_w: 236
-    # input_h: 128
-    # input_w: 128
     train_transform: "[
-        alb.Resize(height=224, width=224),
+        alb.Resize(height=128, width=224),
+        alb.OneOf([
+            alb.ShiftScaleRotate(shift_limit=0.03125, scale_limit=0.20, rotate_limit=20, border_mode=0, value=0, p=1.0),
+            alb.IAAAffine(scale=(0.8, 1.2), translate_percent=(-0.03125, 0.03125), rotate=(-10, 10), shear=(-40, 40), mode='constant', p=1.0),
+        ]),
+        alb.Cutout(num_holes=8, max_h_size=int(128*0.15), max_w_size=int(224*0.15), fill_value=0, p=0.5),
     ]"
-    # alb.Resize(height=128, width=128),
     valid_transform: "[
-        alb.Resize(height=224, width=224),
+        alb.Resize(height=128, width=224),
     ]"
-    # alb.Resize(height=128, width=128),
     # augment.GridMask(num_grid=3, rotate=15, p=0.5),
     # "ShiftScaleRotate/shift_limit=0.075, scale_limit=0.1, rotate_limit=30, interpolation=1, border_mode=0, value=0, p=0.5",
     # "Cutout/num_holes=1, max_h_size=int(137*0.35), max_w_size=int(236*0.35), fill_value=0, always_apply=False, p=0.5"
 
 cutmix:
-    prob: !!python/float 0.
+    prob: !!python/float 0.5
     beta: !!python/float 0.
-    # prob: !!python/float 0.5
-    # beta: !!python/float 1.0
 mixup:
     prob: !!python/float 0.  # 1.0
     beta: !!python/float 0.  #  1.0
 
 model:
     input_dim: 3
+    input_c: 3
     n_outputs: 186
+    pretrained: !!python/bool True
+    name: "efficientnet-b5"
     # name: "resnet34"
-    # pretrained: !!python/bool True
-    name: "se_resnext50_32x4d_dropblock_1"
+    # name: "se_resnext50_32x4d_dropblock_1"
     # pretrained_type: 
-    pretrained_type: "imagenet"
-    dropout_p: !!python/float 0.2
-    strides: [2, 2, 2, 2, 2,]
-    adaptive_pool: !!python/bool True
+    # pretrained_type: "imagenet"
+    # dropout_p: !!python/float 0.2
+    # strides: [2, 2, 2, 2, 2,]
+    # adaptive_pool: !!python/bool True
+    # resume: "../logs/20200312075555/fold_0/checkpoint.pt"
 
 training:
     loss: "CrossEntropyLoss"
+    ohem_loss: !!python/bool False
+    ohem_rate: !!python/float 0.7
+    ohem_epoch: 30
     coef_list: [1.0, 1.0, 1.0]
     split: "KFold"
     n_splits: 5
-    # target_folds: [1, 2, 3, 4, 5]
     target_folds: [1,]
-    batch_size: 128
-    # epochs: 1500
-    epochs: 100
+    batch_size: 160  # 192
+    epochs: 60
     n_worker: 8
     single_fold: !!python/bool False
     single_iter: !!python/bool False
-    # lr_scheduler:
+    lr_scheduler:
+    # name: "ReduceLROnPlateau"
+    # args: "mode='min', factor=0.1, patience=5"
     #     name: "CosineAnnealingLR"
     #     args: "T_max=10, eta_min=1e-3, last_epoch=-1"
+    # name: "CosineAnnealingWarmRestarts"
+    # args: "T_0=20, T_mult=1, eta_min=0."
+    #    name: "MultiStepLR"
+    #    args: "milestones=[31,], gamma=0.1"
 
 optimizer:
     # name: "SGD"
-    # args: "lr=1e-1, weight_decay=0., momentum=0.9, nesterov=True"
+    # args: "lr=0.02, weight_decay=0., momentum=0.9, nesterov=True"
     name: "RAdam"
-    # args: "lr=1e-3, weight_decay=0."
-    args: "lr=1e-4, weight_decay=0."
+    # args: "lr=1e-3, weight_decay=1e-4"
+    args: "lr=1e-3, weight_decay=1e-4"
+    # name: "AdamW"
+    # args: "lr=0.001, weight_decay=0.01"
+    # args: "lr=0.001*0.3, weight_decay=0.01"

@@ -1,13 +1,19 @@
+from collections import OrderedDict
 import numpy as np
 from sklearn.metrics import recall_score
 import torch
 from torch.nn import functional as F
+from tqdm import tqdm
 
 from common import component_list, N_GRAPHEME, N_VOWEL, N_CONSONANT
+from loss import ohem_loss
 import utils
 
 
-def training(dataloader, model, criterion, optimizer, config, is_training=True):
+def training(
+    dataloader, model, criterion, optimizer, config, is_training=True,
+    using_ohem_loss=False, lr=None
+):
     cfg = config
     device = config.general.device
     if is_training:
@@ -17,15 +23,24 @@ def training(dataloader, model, criterion, optimizer, config, is_training=True):
     losses = utils.AverageMeter()
     pred = {'grapheme': [], 'vowel': [], 'consonant': []}
     true = {'grapheme': [], 'vowel': [], 'consonant': []}
+    mode = 'train' if is_training else 'valid'
+    dataset_size = len(dataloader.dataset)
+    _desc = f'[{config.general.expid}] {mode} {dataset_size}'
+    _desc = _desc + f' lr {lr:.4f}' if lr is not None else _desc
+    _desc = _desc + f' OHEMLoss' if using_ohem_loss else _desc
+    pbar = tqdm(total=len(dataloader), desc=_desc, position=0)
     for data, target in dataloader:
         data = data.to(device)
         target = target.to(device)
         with torch.set_grad_enabled(is_training):
             bs = target.size(0)
 
+            aug_type = 'None  '
             # CutMix
             r = np.random.rand(1)
+            r_mixup = np.random.rand(1)
             if is_training and config.cutmix.beta > 0 and r < config.cutmix.prob:
+                aug_type = 'CutMix'
                 lam = np.random.beta(config.cutmix.beta, config.cutmix.beta)
                 rand_index = torch.randperm(data.size()[0]).cuda()
                 target_a = target
@@ -38,9 +53,17 @@ def training(dataloader, model, criterion, optimizer, config, is_training=True):
                 loss = 0.
                 for i in range(len(component_list)):
                     coef = cfg.training.coef_list[i]
-                    loss += coef * criterion(outputs[i], target_a[:, i]) * lam + criterion(
-                            outputs[i], target_b[:, i]) * (1. - lam)
-            elif is_training and config.mixup.beta > 0 and r < config.mixup.prob:
+                    if using_ohem_loss:
+                        _rate = cfg.training.ohem_rate
+                        loss += coef * (
+                            ohem_loss(_rate, outputs[i], target_a[:, i]) * lam +
+                            ohem_loss(_rate, outputs[i], target_b[:, i]) * (1. - lam))
+                    else:
+                        loss += coef * (
+                            criterion(outputs[i], target_a[:, i]) * lam +
+                            criterion(outputs[i], target_b[:, i]) * (1. - lam))
+            elif is_training and config.mixup.beta > 0 and r_mixup < config.mixup.prob:
+                aug_type = 'Mixup'
                 lam = np.random.beta(config.mixup.beta, config.mixup.beta)
                 rand_index = torch.randperm(data.size()[0]).cuda()
                 target_a = target
@@ -51,18 +74,27 @@ def training(dataloader, model, criterion, optimizer, config, is_training=True):
                 loss = 0.
                 for i in range(len(component_list)):
                     coef = cfg.training.coef_list[i]
-                    loss += coef * criterion(outputs[i], target_a[:, i]) * lam + criterion(
-                            outputs[i], target_b[:, i]) * (1. - lam)
+                    loss += coef * (
+                            criterion(outputs[i], target_a[:, i]) * lam +
+                            criterion(outputs[i], target_b[:, i]) * (1. - lam))
             else:
                 output = model(data)
                 outputs = torch.split(output, [N_GRAPHEME, N_VOWEL, N_CONSONANT], dim=1)
-                loss_grapheme = criterion(outputs[0], target[:, 0])
-                loss_vowel = criterion(outputs[1], target[:, 1])
-                loss_consonant = criterion(outputs[2], target[:, 2])
                 loss = 0.
-                loss += cfg.training.coef_list[0] * loss_grapheme
-                loss += cfg.training.coef_list[1] * loss_vowel
-                loss += cfg.training.coef_list[2] * loss_consonant
+                if using_ohem_loss:
+                    _rate = cfg.training.ohem_rate
+                    for i in range(len(component_list)):
+                        coef = cfg.training.coef_list[i]
+                        loss += coef * ohem_loss(_rate, outputs[i], target[:, i])
+                else:
+                    # TODO: refactor
+                    loss_grapheme = criterion(outputs[0], target[:, 0])
+                    loss_vowel = criterion(outputs[1], target[:, 1])
+                    loss_consonant = criterion(outputs[2], target[:, 2])
+                    loss = 0.
+                    loss += cfg.training.coef_list[0] * loss_grapheme
+                    loss += cfg.training.coef_list[1] * loss_vowel
+                    loss += cfg.training.coef_list[2] * loss_consonant
             losses.update(loss.item(), bs)
 
             if is_training:
@@ -75,7 +107,10 @@ def training(dataloader, model, criterion, optimizer, config, is_training=True):
                     F.softmax(outputs[component_i], dim=1).max(1)[1].detach().cpu().numpy().tolist())  # noqa
                 true[component].extend(target[:, component_i].cpu().numpy().tolist())
 
+        pbar.set_postfix(OrderedDict(aug=aug_type))
+        pbar.update(1)
         if config.training.single_iter: break  # noqa
+    pbar.close()
 
     scores = []
     for component in ['grapheme', 'consonant', 'vowel']:

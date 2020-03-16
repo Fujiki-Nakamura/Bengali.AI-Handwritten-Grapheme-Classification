@@ -10,7 +10,9 @@ import yaml
 import numpy as np
 from sklearn import model_selection
 import torch
+from torch import nn
 from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
 
 from common import LOGDIR
 from dataset import MyDataset as Dataset
@@ -36,6 +38,7 @@ def main(args):
     # log
     if cfg.general.expid == '':
         expid = dt.datetime.now().strftime('%Y%m%d%H%M%S')
+        cfg.general.expid = expid
     else:
         expid = cfg.general.expid
     cfg.general.logdir = str(LOGDIR/expid)
@@ -46,6 +49,8 @@ def main(args):
     logger.info(f'Logging at {cfg.general.logdir}')
     logger.info(cfg)
     shutil.copyfile(str(args.config), cfg.general.logdir+'/config.yaml')
+    writer = SummaryWriter(cfg.general.logdir)
+
     # data
     X_train = np.load(cfg.data.X_train, allow_pickle=True)
     y_train = np.load(cfg.data.y_train, allow_pickle=True)
@@ -63,6 +68,20 @@ def main(args):
         y_train_ = y_train[train_idx]
         X_valid_ = X_train[valid_idx]
         y_valid_ = y_train[valid_idx]
+        _ratio = cfg.training.get('with_x_percent_fold_1_of_5', 0.)
+        if _ratio > 0.:
+            assert cfg.training.n_splits == 5 and fold_i + 1 == 1
+            from sklearn.model_selection import train_test_split
+            if _ratio == 0.95:
+                _test_size = 0.25
+            elif _ratio == 0.9:
+                _test_size = 0.5
+            else:
+                raise NotImplementedError
+            _X_train, X_valid_, _y_train, y_valid_ = train_test_split(
+                X_valid_, y_valid_, test_size=_test_size, random_state=cfg.general.random_state)
+            X_train_ = np.concatenate([X_train_, _X_train], axis=0)
+            y_train_ = np.concatenate([y_train_, _y_train], axis=0)
         train_set = Dataset(X_train_, y_train_, cfg, mode='train')
         valid_set = Dataset(X_valid_, y_valid_, cfg, mode='valid')
         if fold_i == 0:
@@ -93,20 +112,39 @@ def main(args):
                 start_epoch = checkpoint['epoch'] + 1
                 best['loss'] = checkpoint['loss/best']
                 best['score'] = checkpoint['score/best']
-                model.load_state_dict(checkpoint['state_dict'])
-                optimizer.load_state_dict(checkpoint['optimizer'])
+                if cfg.general.multi_gpu:
+                    model.load_state_dict(utils.fix_model_state_dict(
+                        checkpoint['state_dict']))
+                else:
+                    model.load_state_dict(checkpoint['state_dict'])
+                if cfg.model.get('load_optimizer', True):
+                    optimizer.load_state_dict(checkpoint['optimizer'])
                 logger.info('Loaded checkpoint {} (epoch {})'.format(
                     cfg.model.resume, start_epoch - 1))
             else:
                 raise IOError('No such file {}'.format(cfg.model.resume))
 
+        if cfg.general.multi_gpu:
+            model = nn.DataParallel(model)
+
         for epoch_i in range(start_epoch, cfg.training.epochs + 1):
+            if scheduler is not None:
+                if cfg.training.lr_scheduler.name == 'MultiStepLR':
+                    optimizer.zero_grad()
+                    optimizer.step()
+                    scheduler.step()
             for param_group in optimizer.param_groups:
                 current_lr = param_group['lr']
-            train = training(train_loader, model, criterion, optimizer, config=cfg)
+            _ohem_loss = (cfg.training.ohem_loss and cfg.training.ohem_epoch < epoch_i)
+            train = training(
+                train_loader, model, criterion, optimizer, config=cfg,
+                using_ohem_loss=_ohem_loss, lr=current_lr
+            )
             valid = training(
-                valid_loader, model, criterion, optimizer, is_training=False, config=cfg)
-            if scheduler is not None:
+                valid_loader, model, criterion, optimizer, is_training=False, config=cfg,
+                lr=current_lr)
+
+            if scheduler is not None and cfg.training.lr_scheduler.name != 'MultiStepLR':
                 if cfg.training.lr_scheduler.name == 'ReduceLROnPlateau':
                     if scheduler.mode == 'min':
                         value = valid['loss']
@@ -124,9 +162,10 @@ def main(args):
                 best['loss'] = valid['loss']
             if is_best['score']:
                 best['score'] = valid['score']
+            model_state_dict = model.module.state_dict() if cfg.general.multi_gpu else model.state_dict()  # noqa
             state_dict = {
                 'epoch': epoch_i,
-                'state_dict': model.state_dict(),
+                'state_dict': model_state_dict,
                 'optimizer': optimizer.state_dict(),
                 'loss/valid': valid['loss'],
                 'score/valid': valid['score'],
@@ -134,12 +173,21 @@ def main(args):
                 'score/best': best['score'],
             }
             utils.save_checkpoint(
-                state_dict, is_best, Path(cfg.general.logdir)/f'fold_{fold_i}')
+                state_dict, is_best, epoch_i, valid['loss'], valid['score'],
+                Path(cfg.general.logdir)/f'fold_{fold_i}',)
+
+            # tensorboard
+            writer.add_scalar('Loss/Train', train['loss'], epoch_i)
+            writer.add_scalar('Loss/Valid', valid['loss'], epoch_i)
+            writer.add_scalar('Loss/Best',  best['loss'], epoch_i)
+            writer.add_scalar('Metrics/Train', train['score'], epoch_i)
+            writer.add_scalar('Metrics/Valid', valid['score'], epoch_i)
+            writer.add_scalar('Metrics/Best', best['score'], epoch_i)
 
             log = f'[{expid}] Fold {fold_i+1} Epoch {epoch_i}/{cfg.training.epochs} '
-            log += f'[loss] {train["loss"]:.4f}/{valid["loss"]:.4f} '
-            log += f'[score] {train["score"]:.4f}/{valid["score"]:.4f} '
-            log += f'({best["score"]:.4f}) '
+            log += f'[loss] {train["loss"]:.6f}/{valid["loss"]:.6f} '
+            log += f'[score] {train["score"]:.6f}/{valid["score"]:.6f} '
+            log += f'({best["score"]:.6f}) '
             log += f'lr {current_lr:.6f}'
             logger.info(log)
 

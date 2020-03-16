@@ -47,12 +47,21 @@ def plot_learning_curve(expid, target_folds=[1, 2, 3, 4, 5]):
             'train/score': results_d[f'fold_{n_fold}']['train']['score'],
             'valid/score': results_d[f'fold_{n_fold}']['valid']['score'],
         })
-
-        fig, axes = plt.subplots(ncols=2, nrows=1, figsize=(2*6, 4))
-        df_fold.plot(ax=axes[0], y=['train/loss', 'valid/loss'],
-                     title=f'{expid} / Fold {n_fold} / Loss')
-        df_fold.plot(ax=axes[1], y=['train/score', 'valid/score'],
-                     title=f'{expid} / Fold {n_fold} / Score')
+        ncol = 3
+        fig, axes = plt.subplots(ncols=ncol, nrows=1, figsize=(ncol*6, 4))
+        df_fold.plot(
+            ax=axes[0], y=['train/loss', 'valid/loss'],
+            title=f'{expid} / Fold {n_fold} / Loss')
+        df_fold.plot(
+            ax=axes[1], y=['train/score', 'valid/score'],
+            title=f'{expid} / Fold {n_fold} / Score',
+            ylim=(0.5, 1.0),
+        )
+        df_fold.plot(
+            ax=axes[2], y=['train/score', 'valid/score'],
+            title=f'{expid} / Fold {n_fold} / Score',
+            ylim=(0.9, 1.0),
+        )
         plt.show()
 
     return results_d

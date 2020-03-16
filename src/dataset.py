@@ -37,8 +37,7 @@ class MyDataset(Dataset):
     def __getitem__(self, idx):
         # input
         input_ = self.data[idx]
-        if self.input_c == 3:
-            input_ = np.concatenate([input_, ]*3, axis=2)
+        input_ = np.repeat(input_, self.input_c, 2)
         if self.transform is not None:
             input_ = self.transform(image=input_)['image']
 
