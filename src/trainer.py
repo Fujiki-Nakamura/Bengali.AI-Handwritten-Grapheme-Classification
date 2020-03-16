@@ -39,7 +39,9 @@ def training(
             # CutMix
             r = np.random.rand(1)
             r_mixup = np.random.rand(1)
-            if is_training and config.cutmix.beta > 0 and r < config.cutmix.prob:
+            cutmix_beta = config.cutmix.get('beta', 1.0)
+            mixup_beta = config.mixup.get('beta', 1.0)
+            if is_training and cutmix_beta > 0 and r < config.cutmix.prob:
                 aug_type = 'CutMix'
                 lam = np.random.beta(config.cutmix.beta, config.cutmix.beta)
                 rand_index = torch.randperm(data.size()[0]).cuda()
@@ -62,7 +64,7 @@ def training(
                         loss += coef * (
                             criterion(outputs[i], target_a[:, i]) * lam +
                             criterion(outputs[i], target_b[:, i]) * (1. - lam))
-            elif is_training and config.mixup.beta > 0 and r_mixup < config.mixup.prob:
+            elif is_training and mixup_beta > 0 and r_mixup < config.mixup.prob:
                 aug_type = 'Mixup'
                 lam = np.random.beta(config.mixup.beta, config.mixup.beta)
                 rand_index = torch.randperm(data.size()[0]).cuda()
