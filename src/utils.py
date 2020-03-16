@@ -59,11 +59,11 @@ def save_checkpoint(
 
 def get_logger(log_file):
     from logging import getLogger, FileHandler, StreamHandler
-    from logging import Formatter, DEBUG, INFO
+    from logging import Formatter, DEBUG, ERROR, INFO
     fh = FileHandler(log_file)
     fh.setLevel(INFO)
     sh = StreamHandler()
-    sh.setLevel(DEBUG)
+    sh.setLevel(ERROR)
     for handler in [fh, sh]:
         formatter = Formatter('%(asctime)s - %(message)s')
         handler.setFormatter(formatter)
