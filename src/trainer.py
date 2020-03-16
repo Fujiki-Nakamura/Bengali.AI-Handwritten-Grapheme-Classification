@@ -109,7 +109,7 @@ def training(
                     F.softmax(outputs[component_i], dim=1).max(1)[1].detach().cpu().numpy().tolist())  # noqa
                 true[component].extend(target[:, component_i].cpu().numpy().tolist())
 
-        pbar.set_postfix(OrderedDict(aug=aug_type))
+        pbar.set_postfix(OrderedDict(loss=losses.avg, aug=f'{aug_type:.6s}'))
         pbar.update(1)
         if config.training.single_iter: break  # noqa
     pbar.close()
